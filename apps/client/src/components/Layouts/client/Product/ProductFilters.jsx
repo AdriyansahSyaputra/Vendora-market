@@ -149,17 +149,26 @@ const AllProductsFilterPanel = ({
             </div>
           </div>
           {/* Discount */}
-          <div className="flex items-center space-x-2 cursor-pointer">
-            <Checkbox
-              id="with-discount"
-              checked={filters.minDiscount > 0}
-              onCheckedChange={(checked) =>
-                onFilterChange("minDiscount", checked ? 1 : 0)
-              }
-            />
-            <label htmlFor="with-discount" className="text-sm font-medium">
-              Products with Discount
-            </label>
+          <div>
+            <h4 className="font-semibold mb-3">With Discount</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              {discountOptions.map((d) => (
+                <label
+                  key={d}
+                  htmlFor={`mobile-discount-${d}`}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <Checkbox
+                    id={`mobile-discount-${d}`}
+                    checked={filters.minDiscount === d}
+                    onCheckedChange={(checked) =>
+                      onFilterChange("minDiscount", checked ? d : 0)
+                    }
+                  />
+                  <span className="text-sm font-medium">{d}% or more</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

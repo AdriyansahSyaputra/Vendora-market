@@ -125,6 +125,7 @@ const allProductsFromDB = [
     date: "2025-05-10",
   },
 ];
+
 const initialFilters = {
   categories: [],
   rating: 0,

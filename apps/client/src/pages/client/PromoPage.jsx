@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import  { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
 import MobileTopNav from "@/components/Templates/client/navbar/MobileTopNav";
@@ -10,6 +11,7 @@ import {
   PromoFilterControls,
   PromoFilterPanel,
 } from "@/components/Layouts/client/Promo/FilterControls";
+import SearchView from "@/components/Elements/SearchView";
 
 const slides = [
   {
@@ -110,10 +112,30 @@ const allPromoProducts = [
 const initialFilters = { categories: [], minDiscount: 0 };
 
 const PromoPage = () => {
+  const location = useLocation();
+  const currentPage = location.pathname;
+  const [isSearching, setIsSearching] = useState(false);
+  const canSearch = currentPage === "/promo";
+
   const [products, setProducts] = useState(allPromoProducts);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [filters, setFilters] = useState(initialFilters);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
+
+  // Handle for header Dynamic
+  const handleSearchClick = () => {
+    if (canSearch) {
+      setIsSearching(true);
+    }
+  };
+
+  const handleExitSearch = () => {
+    setIsSearching(false);
+  };
+
+  useEffect(() => {
+    setIsSearching(false);
+  }, [currentPage]);
 
   useEffect(() => {
     let filtered = [...allPromoProducts];
@@ -152,47 +174,53 @@ const PromoPage = () => {
         <DesktopNavbar />
 
         {/* Navbar untuk Mobile */}
-        <MobileTopNav />
+        <MobileTopNav page={currentPage} onSearchClick={handleSearchClick} />
         <MobileBottomNav />
 
-        {/* Konten Utama Halaman */}
-        <main className="container mx-auto px-4 py-8 pt-24 md:pt-8 pb-24 md:pb-8 space-y-12 md:space-y-16 lg:space-y-20">
-          <BannerCarousel slides={slides} />
+        {isSearching && canSearch ? (
+          <SearchView onBack={handleExitSearch} />
+        ) : (
+          <>
+            {/* Konten Utama Halaman */}
+            <main className="container mx-auto px-4 py-8 pt-24 md:pt-8 pb-24 md:pb-8 space-y-12 md:space-y-16 lg:space-y-20">
+              <BannerCarousel slides={slides} />
 
-          <PromoFilterControls
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onOpenFilterPanel={() => setIsFilterPanelOpen(true)}
-            activeFilterCount={activeFilterCount}
-          />
+              <PromoFilterControls
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onOpenFilterPanel={() => setIsFilterPanelOpen(true)}
+                activeFilterCount={activeFilterCount}
+              />
 
-          <h2 className="text-xl md:text-2xl font-bold mb-4">
-            Today's Hottest Deals
-          </h2>
-          {products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <h4 className="text-xl font-semibold mb-2">
-                Oops! No deals found.
-              </h4>
-              <p className="text-muted-foreground">
-                Try adjusting your filters to find amazing promotions.
-              </p>
-            </div>
-          )}
+              <h2 className="text-xl md:text-2xl font-bold mb-4">
+                Today's Hottest Deals
+              </h2>
+              {products.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <h4 className="text-xl font-semibold mb-2">
+                    Oops! No deals found.
+                  </h4>
+                  <p className="text-muted-foreground">
+                    Try adjusting your filters to find amazing promotions.
+                  </p>
+                </div>
+              )}
 
-          <PromoFilterPanel
-            isOpen={isFilterPanelOpen}
-            onClose={() => setIsFilterPanelOpen(false)}
-            filters={filters}
-            onFilterChange={handleFilterChange}
-          />
-        </main>
+              <PromoFilterPanel
+                isOpen={isFilterPanelOpen}
+                onClose={() => setIsFilterPanelOpen(false)}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+              />
+            </main>
+          </>
+        )}
 
         <Footer />
       </div>

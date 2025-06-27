@@ -1,14 +1,30 @@
 import { ModeToggle } from "@/components/Elements/mode-toggle";
 import { Search, ShoppingCart, MessageSquare, Bell } from "lucide-react";
 import HoverPreviewCard from "./HoverPreviewCard";
+import { Link } from "react-router-dom";
 
 const DesktopNavbar = () => {
   const navLinks = [
-    "Home",
-    "Trending",
-    "Produk",
-    "Promo",
-    "Jadi Seller",
+    {
+      name: "Home",
+      link: "/",
+    },
+    {
+      name: "Trending",
+      link: "/trending",
+    },
+    {
+      name: "Produk",
+      link: "/product",
+    },
+    {
+      name: "Promo",
+      link: "/promo",
+    },
+    {
+      name: "Jadi Seller",
+      link: "/seller",
+    },
   ];
 
   return (
@@ -83,13 +99,14 @@ const DesktopNavbar = () => {
         {/* Navigasi Menu */}
         <nav className="flex items-center justify-center h-12 space-x-8">
           {navLinks.map((link) => (
-            <a
+            <Link
+              to={link.link}
               key={link}
               href="#"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              {link}
-            </a>
+              {link.name}
+            </Link>
           ))}
         </nav>
       </div>
