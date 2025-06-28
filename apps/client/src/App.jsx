@@ -6,6 +6,7 @@ import ProductPage from "./pages/client/ProductPage";
 import NotificationPageMobile from "./pages/client/NotificationPageMobile";
 import AccountPageMobile from "./pages/client/AccountPageMobile";
 import SettingPageMobile from "./pages/client/SettingPageMobile";
+import SettingPageDesktop from "./pages/client/SettingPageDesktop";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/notification" element={<NotificationPageMobile />} />
         <Route path="/account" element={<AccountPageMobile />} />
         <Route path="/settings" element={<SettingPageMobile />} />
+        <Route path="/settings/desktop" element={<SettingPageDesktop />} />
       </Routes>
     </Router>
   );
