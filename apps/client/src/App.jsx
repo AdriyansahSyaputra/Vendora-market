@@ -16,6 +16,14 @@ import AwaitingConfirmationPage from "./pages/vendor/Order/AwaitingConfirmationP
 import InShipmentPage from "./pages/vendor/Order/InShipmentPage";
 import OrderHistoryPage from "./pages/vendor/Order/OrderHistoryPage";
 import MessagePage from "./pages/vendor/MessagePage";
+import AnalyticPage from "./pages/vendor/AnalyticPage";
+import ReviewsPage from "./pages/vendor/Review-feedback/ReviewsPage";
+import ProductReviewsPage from "./pages/vendor/Review-feedback/ProductReviewsPage";
+import RevenuePage from "./pages/vendor/Finance/RevenuePage";
+import WithdrawalPage from "./pages/vendor/Finance/WithdrawalPage";
+import PaymentHistoryPage from "./pages/vendor/Finance/PaymentHistoryPage";
+import PromotionPage from "./pages/vendor/PromotionPage";
+import StoreSettingPage from "./pages/vendor/StoreSettingPage";
 
 const App = () => {
   return (
@@ -48,6 +56,24 @@ const App = () => {
         <Route path="/store/orders/history" element={<OrderHistoryPage />} />
 
         <Route path="/store/messages" element={<MessagePage />} />
+
+        <Route path="/store/analytics" element={<AnalyticPage />} />
+
+        {/* Review routes */}
+        <Route path="/store/reviews" element={<ReviewsPage />} />
+        <Route path="/store/reviews/:name" element={<ProductReviewsPage />} />
+
+        {/* Finance routes */}
+        <Route path="/store/finance" element={<RevenuePage />} />
+        <Route path="/store/finance/withdrawals" element={<WithdrawalPage />} />
+        <Route
+          path="/store/finance/payment-history"
+          element={<PaymentHistoryPage />}
+        />
+
+        <Route path="/store/promotions" element={<PromotionPage />} />
+
+        <Route path="/store/settings/store" element={<StoreSettingPage />} />
       </Routes>
     </Router>
   );

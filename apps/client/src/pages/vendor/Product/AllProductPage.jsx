@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Helmet } from "react-helmet-async";
 
 // Dummy Data
 const products = Array.from({ length: 50 }, (_, i) => ({
@@ -49,6 +50,8 @@ const AllProductPage = () => {
 
   return (
     <>
+    <Helmet title="All Products" />
+    
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />

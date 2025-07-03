@@ -6,6 +6,7 @@ import ChatModal from "@/components/Layouts/vendor/Message/ChatModal";
 import { Card, CardContent } from "@/components/ui/card";
 import SearchFilter from "@/components/Layouts/vendor/Message/SearchFilter";
 import CardMessage from "@/components/Layouts/vendor/Message/CardMessage";
+import { Helmet } from "react-helmet-async";
 
 const MessagePage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -83,6 +84,8 @@ const MessagePage = () => {
 
   return (
     <>
+      <Helmet title="Messages" />
+      
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />
@@ -94,6 +97,13 @@ const MessagePage = () => {
           {/* Konten Utama Halaman */}
           <main className="flex-1 p-4 sm:px-6 sm:py-6 space-y-4">
             <div className="flex flex-col gap-4 md:gap-8 space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
+                <p className="text-muted-foreground">
+                  View and manage your messages.
+                </p>
+              </div>
+
               <MessageStatCards />
               <Card>
                 <CardContent className="pt-6">

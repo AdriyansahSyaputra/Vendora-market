@@ -1,16 +1,16 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
 import Topbar from "@/components/Templates/vendor/topbar/Topbar";
-import AwaitingConfirmation from "@/components/Layouts/vendor/Order/AwaitingConfirmation";
+import PaymentHistory from "@/components/Layouts/vendor/Finance/PaymentHistory";
 import { Helmet } from "react-helmet-async";
 
-const AwaitingConfirmationPage = () => {
+const PaymentHistoryPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <>
-    <Helmet title="Awaiting Confirmation" />
-    
+      <Helmet title="Payment History" />
+
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />
@@ -24,14 +24,14 @@ const AwaitingConfirmationPage = () => {
             <div className="flex flex-col gap-4 md:gap-8">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
-                  Awaiting Confirmation
+                  Payment History
                 </h1>
                 <p className="text-muted-foreground">
-                  Manage all orders related to your store.
+                  Manage all payment history related to your store.
                 </p>
               </div>
 
-              <AwaitingConfirmation />
+              <PaymentHistory />
             </div>
           </main>
         </div>
@@ -40,4 +40,4 @@ const AwaitingConfirmationPage = () => {
   );
 };
 
-export default AwaitingConfirmationPage;
+export default PaymentHistoryPage;

@@ -21,7 +21,7 @@ import {
 
 export const SidebarMenuContent = ({ isCollapsed }) => (
   <div className="flex flex-col h-full">
-    <div className="flex items-center h-16 border-b px-4">
+    <div className="flex items-center h-16 border-b px-4 flex-shrink-0">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary rounded-lg text-primary-foreground">
           <StoreIcon className="h-6 w-6" />
@@ -42,61 +42,89 @@ export const SidebarMenuContent = ({ isCollapsed }) => (
       >
         {!isCollapsed && "Main Menu"}
       </p>
-      <NavLink icon={<LayoutDashboard />} isCollapsed={isCollapsed}>
+      <NavLink
+        to="/store/dashboard"
+        icon={<LayoutDashboard />}
+        isCollapsed={isCollapsed}
+      >
         Dashboard
       </NavLink>
+
       <CollapsibleNavLink
         icon={<Package />}
         title="Products"
         isCollapsed={isCollapsed}
+        basePath="/store/products"
       >
-        <SubNavLink>All Products</SubNavLink>
-        <SubNavLink>Add Product</SubNavLink>
-        <SubNavLink>Categories</SubNavLink>
+        <SubNavLink to="/store/products">All Products</SubNavLink>
+        <SubNavLink to="/store/products/new">Add Product</SubNavLink>
+        <SubNavLink to="/store/products/categories">Categories</SubNavLink>
       </CollapsibleNavLink>
-      <CollapsibleNavLink
+
+      <NavLink
+        to="/store/settings/store"
         icon={<Store />}
-        title="Store"
         isCollapsed={isCollapsed}
       >
-        <SubNavLink>Store Profile</SubNavLink>
-        <SubNavLink>Store Settings</SubNavLink>
-      </CollapsibleNavLink>
+        Store Settings
+      </NavLink>
+
       <CollapsibleNavLink
         icon={<ShoppingCart />}
         title="Orders"
         isCollapsed={isCollapsed}
+        basePath="/store/orders"
       >
-        <SubNavLink>All Orders</SubNavLink>
-        <SubNavLink>Awaiting Confirmation</SubNavLink>
-        <SubNavLink>In Shipment</SubNavLink>
-        <SubNavLink>Order History</SubNavLink>
+        <SubNavLink to="/store/orders">All Orders</SubNavLink>
+        <SubNavLink to="/store/orders/awaiting-confirmation">
+          Awaiting Confirmation
+        </SubNavLink>
+        <SubNavLink to="/store/orders/shipment">In Shipment</SubNavLink>
+        <SubNavLink to="/store/orders/history">Order History</SubNavLink>
       </CollapsibleNavLink>
-      <NavLink icon={<MessageCircle />} isCollapsed={isCollapsed}>
+
+      <NavLink
+        to="/store/messages"
+        icon={<MessageCircle />}
+        isCollapsed={isCollapsed}
+      >
         Messages
       </NavLink>
-      <NavLink icon={<BarChart />} isCollapsed={isCollapsed}>
+
+      <NavLink
+        to="/store/analytics"
+        icon={<BarChart />}
+        isCollapsed={isCollapsed}
+      >
         Analytics
       </NavLink>
-      <NavLink icon={<Star />} isCollapsed={isCollapsed}>
+
+      <NavLink to="/store/reviews" icon={<Star />} isCollapsed={isCollapsed}>
         Reviews & Feedback
       </NavLink>
+
       <NavLink icon={<Receipt />} isCollapsed={isCollapsed}>
         Invoices
       </NavLink>
+
       <CollapsibleNavLink
         icon={<Wallet />}
         title="Finance"
         isCollapsed={isCollapsed}
+        basePath="/store/finance"
       >
-        <SubNavLink>Revenue</SubNavLink>
-        <SubNavLink>Withdrawals</SubNavLink>
-        <SubNavLink>Payment History</SubNavLink>
+        <SubNavLink to="/store/finance">Revenue</SubNavLink>
+        <SubNavLink to="/store/finance/withdrawals">Withdrawals</SubNavLink>
+        <SubNavLink to="/store/finance/payment-history">
+          Payment History
+        </SubNavLink>
       </CollapsibleNavLink>
-      <NavLink icon={<User />} isCollapsed={isCollapsed}>
-        My Account
-      </NavLink>
-      <NavLink icon={<Ticket />} isCollapsed={isCollapsed}>
+
+      <NavLink
+        to="/store/promotions"
+        icon={<Ticket />}
+        isCollapsed={isCollapsed}
+      >
         Promotions
       </NavLink>
       <p
@@ -106,14 +134,18 @@ export const SidebarMenuContent = ({ isCollapsed }) => (
       >
         {!isCollapsed && "Support"}
       </p>
-      <NavLink icon={<HelpCircle />} isCollapsed={isCollapsed}>
+      <NavLink
+        to="/store/support"
+        icon={<HelpCircle />}
+        isCollapsed={isCollapsed}
+      >
         Help Center
       </NavLink>
       <NavLink icon={<Settings />} isCollapsed={isCollapsed}>
         Settings
       </NavLink>
     </nav>
-    <div className="mt-auto border-t p-4">
+    <div className="mt-auto border-t p-4 flex-shrink-0">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />

@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useLocation } from "react-router-dom";
 
-const CollapsibleNavLink = ({ icon, title, children, isCollapsed }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const CollapsibleNavLink = ({
+  icon,
+  title,
+  children,
+  isCollapsed,
+  basePath,
+}) => {
+  const location = useLocation();
+  // Cek apakah path URL saat ini dimulai dengan path dasar dari grup ini.
+  const isInitiallyOpen = location.pathname.startsWith(basePath);
+  const [isOpen, setIsOpen] = useState(isInitiallyOpen);
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
