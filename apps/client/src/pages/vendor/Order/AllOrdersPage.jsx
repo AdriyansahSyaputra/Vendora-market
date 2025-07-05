@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import AllOrders from "@/components/Layouts/vendor/Order/AllOrders";
 import { Helmet } from "react-helmet-async";
 

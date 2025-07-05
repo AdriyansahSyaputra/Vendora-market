@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import SalesAnalysisChart from "@/components/Layouts/vendor/Analytic/SalesAnalysisChart";
 import TopProductsChart from "@/components/Layouts/vendor/Analytic/TopProductsChart";
 import ConversionFunnelChart from "@/components/Layouts/vendor/Analytic/ConversionFunnelChart";

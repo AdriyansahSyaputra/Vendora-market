@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import FilterSearch from "@/components/Layouts/vendor/Product/all-product/FilterSearch";
 import ProductTable from "@/components/Layouts/vendor/Product/all-product/ProductTable";
 import PaginationTable from "@/components/Layouts/vendor/Product/all-product/Pagination";
@@ -50,8 +50,8 @@ const AllProductPage = () => {
 
   return (
     <>
-    <Helmet title="All Products" />
-    
+      <Helmet title="All Products" />
+
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import StoreProfile from "@/components/Layouts/vendor/Store-setting/StoreProfile";
 import PaymentMethod from "@/components/Layouts/vendor/Store-setting/PaymentMethod";
 import ShippingOption from "@/components/Layouts/vendor/Store-setting/ShippingOption";

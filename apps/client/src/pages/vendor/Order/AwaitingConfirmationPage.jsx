@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import AwaitingConfirmation from "@/components/Layouts/vendor/Order/AwaitingConfirmation";
 import { Helmet } from "react-helmet-async";
 
@@ -9,8 +9,8 @@ const AwaitingConfirmationPage = () => {
 
   return (
     <>
-    <Helmet title="Awaiting Confirmation" />
-    
+      <Helmet title="Awaiting Confirmation" />
+
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import CouponFormModal from "@/components/Layouts/vendor/Promotion/CouponFormModal";
 import CouponCard from "@/components/Layouts/vendor/Promotion/CouponCard";
 import { Button } from "@/components/ui/button";

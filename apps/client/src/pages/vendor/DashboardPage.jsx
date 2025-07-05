@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import DashboardStatsGrid from "@/components/Layouts/vendor/Dashboard/DashboardStatsGrid";
 import FinancialPieChart from "@/components/Layouts/vendor/Dashboard/FinancialPieChart";
 import RecentCheckoutsTable from "@/components/Layouts/vendor/Dashboard/RecentCheckoutsTable";

@@ -24,6 +24,7 @@ import WithdrawalPage from "./pages/vendor/Finance/WithdrawalPage";
 import PaymentHistoryPage from "./pages/vendor/Finance/PaymentHistoryPage";
 import PromotionPage from "./pages/vendor/PromotionPage";
 import StoreSettingPage from "./pages/vendor/StoreSettingPage";
+import CompanyDashboardPage from "./pages/company/Dashboardpage";
 
 const App = () => {
   return (
@@ -74,6 +75,9 @@ const App = () => {
         <Route path="/store/promotions" element={<PromotionPage />} />
 
         <Route path="/store/settings/store" element={<StoreSettingPage />} />
+
+        {/* Company Routes */}
+        <Route path="/dashboard" element={<CompanyDashboardPage />} />
       </Routes>
     </Router>
   );

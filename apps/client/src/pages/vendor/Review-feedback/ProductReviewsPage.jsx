@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import IndividualReviewCard from "@/components/Layouts/vendor/Review-feedback/IndividualReviewCard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
-import Topbar from "@/components/Templates/vendor/topbar/Topbar";
+import Topbar from "@/components/Templates/company/topbar/Topbar";
 import MessageStatCards from "@/components/Layouts/vendor/Message/MessageStatCards";
 import ChatModal from "@/components/Layouts/vendor/Message/ChatModal";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,7 +85,7 @@ const MessagePage = () => {
   return (
     <>
       <Helmet title="Messages" />
-      
+
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
         <Sidebar isCollapsed={isCollapsed} />
