@@ -37,7 +37,7 @@ const Topbar = ({ isCollapsed, setIsCollapsed }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-white dark:bg-gray-950 px-4 sm:px-6">
       {/* Tombol Sidebar untuk Mobile (menggunakan Sheet) */}
       <Sheet>
         <SheetTrigger asChild>

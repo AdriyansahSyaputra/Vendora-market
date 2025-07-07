@@ -20,6 +20,9 @@ import {
   Wallet,
   Ticket,
   HelpCircle,
+  Truck,
+  ServerCog,
+  History,
 } from "lucide-react";
 
 export const SidebarMenuContent = ({ isCollapsed }) => {
@@ -48,7 +51,7 @@ export const SidebarMenuContent = ({ isCollapsed }) => {
           {!isCollapsed && "Main Menu"}
         </p>
         <Navlink
-          to="/store/dashboard"
+          to="/dashboard"
           icon={<LayoutDashboard />}
           isCollapsed={isCollapsed}
         >
@@ -56,81 +59,107 @@ export const SidebarMenuContent = ({ isCollapsed }) => {
         </Navlink>
 
         <CollapsibleNavLink
+          icon={<User />}
+          title="Users"
+          isCollapsed={isCollapsed}
+          basePath="/dashboard/users"
+        >
+          <SubNavlink to="/dashboard/users">All Users</SubNavlink>
+          <SubNavlink to="/dashboard/users/active">
+            Seller Verification
+          </SubNavlink>
+        </CollapsibleNavLink>
+
+        <CollapsibleNavLink
           icon={<Package />}
           title="Products"
           isCollapsed={isCollapsed}
-          basePath="/store/products"
+          basePath="/dashboard/products"
         >
-          <SubNavlink to="/store/products">All Products</SubNavlink>
-          <SubNavlink to="/store/products/new">Add Product</SubNavlink>
-          <SubNavlink to="/store/products/categories">Categories</SubNavlink>
+          <SubNavlink to="/dashboard/products">All Products</SubNavlink>
+          <SubNavlink to="/dashboard/products/new">
+            Category Management
+          </SubNavlink>
         </CollapsibleNavLink>
 
         <Navlink
-          to="/store/settings/store"
-          icon={<Store />}
+          to="/dashboard/orders"
+          icon={<Truck />}
           isCollapsed={isCollapsed}
         >
-          Store Settings
+          Order Management
         </Navlink>
 
         <CollapsibleNavLink
-          icon={<ShoppingCart />}
-          title="Orders"
+          icon={<Receipt />}
+          title="Transactions & Finance"
           isCollapsed={isCollapsed}
-          basePath="/store/orders"
+          basePath="/dashboard/transactions"
         >
-          <SubNavlink to="/store/orders">All Orders</SubNavlink>
-          <SubNavlink to="/store/orders/awaiting-confirmation">
-            Awaiting Confirmation
+          <SubNavlink to="/dashboard/transactions">List Transaction</SubNavlink>
+          <SubNavlink to="/dashboard/transactions/payout">
+            Payout Seller
           </SubNavlink>
-          <SubNavlink to="/store/orders/shipment">In Shipment</SubNavlink>
-          <SubNavlink to="/store/orders/history">Order History</SubNavlink>
+          <SubNavlink to="/dashboard/transactions/refunds">Refunds</SubNavlink>
+          <SubNavlink to="/dashboard/transactions/commission">
+            Platform Commission
+          </SubNavlink>
+          <SubNavlink to="/dashboard/transactions/complain">
+            Complain
+          </SubNavlink>
         </CollapsibleNavLink>
 
         <Navlink
-          to="/store/messages"
-          icon={<MessageCircle />}
+          to="/dashboard/stores"
+          icon={<Store />}
           isCollapsed={isCollapsed}
         >
-          Messages
+          Store Management
         </Navlink>
 
+        <CollapsibleNavLink
+          icon={<Ticket />}
+          title="Advertisements"
+          isCollapsed={isCollapsed}
+          basePath="/dashboard/advertisements"
+        >
+          <SubNavlink to="/dashboard/advertisements">Advertisement</SubNavlink>
+          <SubNavlink to="/dashboard/advertisements/voucher">
+            Voucher
+          </SubNavlink>
+        </CollapsibleNavLink>
+
         <Navlink
-          to="/store/analytics"
+          to="/dashboard/analytics"
           icon={<BarChart />}
           isCollapsed={isCollapsed}
         >
           Analytics
         </Navlink>
 
-        <Navlink to="/store/reviews" icon={<Star />} isCollapsed={isCollapsed}>
-          Reviews & Feedback
-        </Navlink>
-
-        <Navlink icon={<Receipt />} isCollapsed={isCollapsed}>
-          Invoices
-        </Navlink>
-
         <CollapsibleNavLink
-          icon={<Wallet />}
-          title="Finance"
+          icon={<ServerCog />}
+          title="System Settings"
           isCollapsed={isCollapsed}
-          basePath="/store/finance"
+          basePath="/dashboard/system-settings"
         >
-          <SubNavlink to="/store/finance">Revenue</SubNavlink>
-          <SubNavlink to="/store/finance/withdrawals">Withdrawals</SubNavlink>
-          <SubNavlink to="/store/finance/payment-history">
-            Payment History
+          <SubNavlink to="/dashboard/system-settings/policies">
+            Platform Policy
+          </SubNavlink>
+          <SubNavlink to="/dashboard/system-settings/notification">
+            System Notification
+          </SubNavlink>
+          <SubNavlink to="/dashboard/system-settings/backup">
+            Backup Database
           </SubNavlink>
         </CollapsibleNavLink>
 
         <Navlink
-          to="/store/promotions"
-          icon={<Ticket />}
+          to="/dashboard/activity"
+          icon={<History />}
           isCollapsed={isCollapsed}
         >
-          Promotions
+          Log Activity
         </Navlink>
         <p
           className={`px-4 pt-6 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider ${
@@ -157,7 +186,7 @@ export const SidebarMenuContent = ({ isCollapsed }) => {
 const Sidebar = ({ isCollapsed }) => {
   return (
     <aside
-      className={`fixed top-0 left-0 bottom-0 hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 bottom-0 hidden md:flex flex-col bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >

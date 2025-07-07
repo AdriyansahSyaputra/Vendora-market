@@ -25,6 +25,7 @@ import PaymentHistoryPage from "./pages/vendor/Finance/PaymentHistoryPage";
 import PromotionPage from "./pages/vendor/PromotionPage";
 import StoreSettingPage from "./pages/vendor/StoreSettingPage";
 import CompanyDashboardPage from "./pages/company/Dashboardpage";
+import AllUsersPage from "./pages/company/User/AllUserPage";
 
 const App = () => {
   return (
@@ -78,6 +79,7 @@ const App = () => {
 
         {/* Company Routes */}
         <Route path="/dashboard" element={<CompanyDashboardPage />} />
+        <Route path="/dashboard/users" element={<AllUsersPage />} />
       </Routes>
     </Router>
   );

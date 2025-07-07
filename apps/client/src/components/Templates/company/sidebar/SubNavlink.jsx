@@ -7,7 +7,7 @@ const SubNavlink = ({ to, children }) => {
       {({ isActive }) => (
         <Button
           variant="ghost"
-          className={`w-full justify-start h-9 pl-8 ${
+          className={`w-full justify-start h-9 ${
             isActive
               ? "text-foreground bg-muted"
               : "text-muted-foreground hover:text-foreground"
