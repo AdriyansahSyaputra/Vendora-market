@@ -26,6 +26,7 @@ import PromotionPage from "./pages/vendor/PromotionPage";
 import StoreSettingPage from "./pages/vendor/StoreSettingPage";
 import CompanyDashboardPage from "./pages/company/Dashboardpage";
 import AllUsersPage from "./pages/company/User/AllUserPage";
+import SellerVerification from "./pages/company/User/SellerVerification";
 
 const App = () => {
   return (
@@ -80,6 +81,7 @@ const App = () => {
         {/* Company Routes */}
         <Route path="/dashboard" element={<CompanyDashboardPage />} />
         <Route path="/dashboard/users" element={<AllUsersPage />} />
+        <Route path="/dashboard/users/verification" element={<SellerVerification />} />
       </Routes>
     </Router>
   );

@@ -3,7 +3,7 @@ import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
 import FilterSearch from "@/components/Layouts/vendor/Product/all-product/FilterSearch";
 import ProductTable from "@/components/Layouts/vendor/Product/all-product/ProductTable";
-import PaginationTable from "@/components/Layouts/vendor/Product/all-product/Pagination";
+import PaginationTable from "@/components/Elements/Pagination";
 import EditProductModal from "@/components/Layouts/vendor/Product/all-product/EditProductModal";
 import {
   Card,
