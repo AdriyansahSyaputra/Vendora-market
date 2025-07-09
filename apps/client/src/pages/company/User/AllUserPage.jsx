@@ -198,7 +198,6 @@ const AllUserPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDetailModalOpen, setDetailModalOpen] = useState(false);
   const [isBanModalOpen, setBanModalOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -223,13 +222,11 @@ const AllUserPage = () => {
   const handleOpenDetailModal = (user) => {
     setSelectedUser(user);
     setDetailModalOpen(true);
-    setActiveDropdown(null);
   };
 
   const handleOpenBanModal = (user) => {
     setSelectedUser(user);
     setBanModalOpen(true);
-    setActiveDropdown(null);
   };
 
   const handleBanConfirm = (userId, reason) => {
@@ -271,7 +268,6 @@ const AllUserPage = () => {
                     users={paginatedUsers}
                     handleOpenDetailModal={handleOpenDetailModal}
                     handleOpenBanModal={handleOpenBanModal}
-                    activeDropdown={activeDropdown}
                   />
                   <PaginationTable
                     currentPage={currentPage}

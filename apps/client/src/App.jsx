@@ -27,6 +27,9 @@ import StoreSettingPage from "./pages/vendor/StoreSettingPage";
 import CompanyDashboardPage from "./pages/company/Dashboardpage";
 import AllUsersPage from "./pages/company/User/AllUserPage";
 import SellerVerification from "./pages/company/User/SellerVerification";
+import AllProductPageCompany from "./pages/company/Product/AllProductPage";
+import CategoryManagementPage from "./pages/company/Product/CategoryManagementPage";
+import OrderManagementPage from "./pages/company/OrderManagementPage";
 
 const App = () => {
   return (
@@ -82,6 +85,11 @@ const App = () => {
         <Route path="/dashboard" element={<CompanyDashboardPage />} />
         <Route path="/dashboard/users" element={<AllUsersPage />} />
         <Route path="/dashboard/users/verification" element={<SellerVerification />} />
+
+        <Route path="/dashboard/products" element={<AllProductPageCompany />} />
+        <Route path="/dashboard/products/categories" element={<CategoryManagementPage />} />
+
+        <Route path="/dashboard/orders" element={<OrderManagementPage />} />
       </Routes>
     </Router>
   );

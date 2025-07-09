@@ -163,7 +163,7 @@ const SellerVerification = () => {
                 </CardHeader>
                 <CardContent>
                   {" "}
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-6">
                     <Input
                       placeholder="Search by name or email..."
                       value={searchQuery}
