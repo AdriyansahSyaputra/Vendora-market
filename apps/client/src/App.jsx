@@ -30,6 +30,10 @@ import SellerVerification from "./pages/company/User/SellerVerification";
 import AllProductPageCompany from "./pages/company/Product/AllProductPage";
 import CategoryManagementPage from "./pages/company/Product/CategoryManagementPage";
 import OrderManagementPage from "./pages/company/OrderManagementPage";
+import StoreManagementPage from "./pages/company/StoreManagementPage";
+import AdvertisementPage from "./pages/company/Advertisement/AdvertisementPage";
+import VoucherPage from "./pages/company/Advertisement/VoucherPage";
+import LogActivityPage from "./pages/company/LogActivityPage";
 
 const App = () => {
   return (
@@ -90,6 +94,14 @@ const App = () => {
         <Route path="/dashboard/products/categories" element={<CategoryManagementPage />} />
 
         <Route path="/dashboard/orders" element={<OrderManagementPage />} />
+
+        <Route path="/dashboard/stores" element={<StoreManagementPage />} />
+
+        <Route path="/dashboard/advertisements" element={<AdvertisementPage />} />
+        <Route path="/dashboard/advertisements/vouchers" element={<VoucherPage />} />
+
+        <Route path="/dashboard/log-activity" element={<LogActivityPage />} />
+
       </Routes>
     </Router>
   );
