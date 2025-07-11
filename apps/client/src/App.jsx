@@ -34,6 +34,7 @@ import StoreManagementPage from "./pages/company/StoreManagementPage";
 import AdvertisementPage from "./pages/company/Advertisement/AdvertisementPage";
 import VoucherPage from "./pages/company/Advertisement/VoucherPage";
 import LogActivityPage from "./pages/company/LogActivityPage";
+import AuthPage from "./pages/auth/AuthPage";
 
 const App = () => {
   return (
@@ -101,6 +102,8 @@ const App = () => {
         <Route path="/dashboard/advertisements/vouchers" element={<VoucherPage />} />
 
         <Route path="/dashboard/log-activity" element={<LogActivityPage />} />
+
+        <Route path="/auth" element={<AuthPage/>} />
 
       </Routes>
     </Router>
