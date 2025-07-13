@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { MailIcon, LockIcon, UserIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
 
 const GoogleIcon = (props) => (
   <svg viewBox="0 0 48 48" {...props}>
@@ -63,28 +66,38 @@ const AuthForm = () => {
         {isRegister && (
           <div className="relative">
             <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
+            <Input
               name="fullname"
               type="text"
               required
-              className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+              className="h-12 rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
               placeholder="Full Name"
             />
           </div>
         )}
         <div className="relative">
+          <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <Input
+            name="username"
+            type="text"
+            required
+            className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+            placeholder="Username"
+          />
+        </div>
+        <div className="relative">
           <MailIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
+          <Input
             name="email"
             type="email"
             required
             className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-            placeholder="email@example.com"
+            placeholder="Email Address"
           />
         </div>
         <div className="relative">
           <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <input
+          <Input
             name="password"
             type="password"
             required
