@@ -47,11 +47,14 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// JWT configuration
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = "1d";
 
+// Login function
+// Handles both normal user login and special admin login
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body;
 
   try {
     // Special admin login
@@ -82,15 +85,28 @@ export const login = async (req, res) => {
     }
 
     // Normal Login
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { username: identifier.toLowerCase() },
+      ],
+    });
+
     if (!user) {
-      return res.status(400).json({ errors: { email: "Email not found" } });
+      // Kirim error umum untuk keamanan
+      return res
+        .status(401)
+        .json({ message: "Username/Email or password is invalid" });
     }
 
     // Verifikasi Password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ errors: { password: "Invalid password" } });
+      return res
+        .status(400)
+        .json({
+          errors: { password: "Username/Email or password is invalid" },
+        });
     }
 
     // Buat Token
@@ -141,6 +157,8 @@ export const logout = (req, res) => {
     .json({ message: "Logout successful" });
 };
 
+// Get current user information
+// This function retrieves the current user's information from the request object
 export const getCurrentUser = (req, res) => {
   const user = req.user;
   if (!user) return res.status(404).json({ message: "User not found." });

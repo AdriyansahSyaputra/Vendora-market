@@ -1,8 +1,16 @@
 import { useState } from "react";
-import { MailIcon, LockIcon, UserIcon } from "lucide-react";
+import { MailIcon, LockIcon, User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/context/auth/authContext";
 
 const GoogleIcon = (props) => (
   <svg viewBox="0 0 48 48" {...props}>
@@ -27,6 +35,56 @@ const GoogleIcon = (props) => (
 
 const AuthForm = () => {
   const [isRegister, setIsRegister] = useState(false);
+  const [formError, setFormError] = useState(null);
+
+  const { login, register: registerUser } = useAuth();
+
+  const form = useForm({
+    defaultValues: {
+      fullName: "",
+      username: "",
+      email: "",
+      password: "",
+    },
+  });
+  const { isSubmitting } = form.formState;
+
+  async function onSubmit(values) {
+    setFormError(null);
+    form.clearErrors();
+    try {
+      if (isRegister) {
+        await registerUser(values);
+      } else {
+        const credentials = {
+          identifier: values.username,
+          password: values.password,
+        };
+        await login(credentials);
+      }
+    } catch (error) {
+      const zodErrors = error?.errors || error?.response?.data?.errors;
+
+      if (Array.isArray(zodErrors)) {
+        zodErrors.forEach((err) => {
+          const fieldName = err.path[1];
+          form.setError(fieldName, { message: err.message });
+        });
+      } else {
+        console.log("Login error response:", error.response?.data);
+
+        setFormError(
+          error?.response?.data?.message || "Terjadi kesalahan saat login."
+        );
+      }
+    }
+  }
+
+  const toggleFormMode = () => {
+    setIsRegister(!isRegister);
+    setFormError(null);
+    form.reset(); // Reset nilai dan status form
+  };
 
   return (
     <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-sm md:p-12">
@@ -62,63 +120,115 @@ const AuthForm = () => {
       </div>
 
       {/* Form Email & Password */}
-      <form className="space-y-6" action="#" method="POST">
-        {isRegister && (
-          <div className="relative">
-            <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <Input
-              name="fullname"
-              type="text"
-              required
-              className="h-12 rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-              placeholder="Full Name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {isRegister && (
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <User className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                        placeholder="Nama Lengkap"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        )}
-        <div className="relative">
-          <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <Input
-            name="username"
-            type="text"
-            required
-            className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-            placeholder="Username"
-          />
-        </div>
-        <div className="relative">
-          <MailIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <Input
-            name="email"
-            type="email"
-            required
-            className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-            placeholder="Email Address"
-          />
-        </div>
-        <div className="relative">
-          <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <Input
-            name="password"
-            type="password"
-            required
-            className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-            placeholder="Password"
-          />
-        </div>
+          )}
 
-        <button
-          type="submit"
-          className="h-12 w-full rounded-lg bg-slate-900 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-        >
-          {isRegister ? "Create an account" : "Login"}
-        </button>
-      </form>
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                      placeholder={
+                        isRegister ? "Username" : "Username atau Email"
+                      }
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {isRegister && (
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="relative">
+                      <MailIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                        placeholder="Email"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      type="password"
+                      className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
+                      placeholder="Password"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {/* Tampilkan pesan kesalahan jika ada */}
+          {formError && (
+            <p className="text-center text-xs text-red-500">{formError}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-12 w-full rounded-lg bg-slate-900 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isRegister ? "Create an account" : "Login"}
+          </button>
+        </form>
+      </Form>
 
       {/* Tautan untuk beralih antara Login dan Register */}
       <p className="text-center text-sm text-slate-600">
         {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
         <button
-          onClick={() => setIsRegister(!isRegister)}
+          onClick={toggleFormMode}
           className="font-semibold text-slate-800 hover:underline focus:outline-none"
         >
           {isRegister ? "Login" : "Register now!"}
