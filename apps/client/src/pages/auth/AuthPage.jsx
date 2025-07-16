@@ -55,6 +55,8 @@ const AuthForm = () => {
     try {
       if (isRegister) {
         await registerUser(values);
+        form.reset();
+        setIsRegister(false);
       } else {
         const credentials = {
           identifier: values.username,
@@ -63,7 +65,7 @@ const AuthForm = () => {
         await login(credentials);
       }
     } catch (error) {
-      const zodErrors = error?.errors || error?.response?.data?.errors;
+      const zodErrors = error?.data?.errors;
 
       if (Array.isArray(zodErrors)) {
         zodErrors.forEach((err) => {
@@ -83,7 +85,7 @@ const AuthForm = () => {
   const toggleFormMode = () => {
     setIsRegister(!isRegister);
     setFormError(null);
-    form.reset(); // Reset nilai dan status form
+    form.reset();
   };
 
   return (
@@ -218,7 +220,7 @@ const AuthForm = () => {
             disabled={isSubmitting}
             className="h-12 w-full rounded-lg bg-slate-900 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin m-auto" />}
             {isRegister ? "Create an account" : "Login"}
           </button>
         </form>

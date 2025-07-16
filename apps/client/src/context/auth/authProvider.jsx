@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Login failed:", error);
-      throw error.response?.data || error;
+      throw error.response;
     }
   };
 
