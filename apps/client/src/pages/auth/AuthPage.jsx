@@ -62,6 +62,8 @@ const AuthForm = () => {
           identifier: values.username,
           password: values.password,
         };
+      console.log("Sending login:", credentials);
+
         await login(credentials);
       }
     } catch (error) {

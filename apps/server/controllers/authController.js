@@ -55,15 +55,22 @@ const JWT_EXPIRES = "1d";
 // Handles both normal user login and special admin login
 export const login = async (req, res) => {
   const { identifier, password } = req.body;
+  console.log("Login received:", { identifier, password });
+
+  if (!identifier || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username/Email dan password wajib diisi." });
+  }
 
   try {
     // Special admin login
     if (
-      email === process.env.ADMIN_EMAIL &&
+      identifier === process.env.ADMIN_EMAIL &&
       password === process.env.ADMIN_PASSWORD
     ) {
       const payload = {
-        email,
+        email: identifier,
         role: "admin",
       };
 
@@ -73,7 +80,7 @@ export const login = async (req, res) => {
         .cookie("token", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          sameSite: "strict",
           maxAge: 24 * 60 * 60 * 1000,
         })
         .setHeader("Authorization", `Bearer ${token}`)
@@ -103,10 +110,8 @@ export const login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res
-        .status(400)
-        .json({
-          errors: { password: "Username/Email or password is invalid" },
-        });
+        .status(401)
+        .json({ message: "Username/Email atau password salah" });
     }
 
     // Buat Token
@@ -130,7 +135,7 @@ export const login = async (req, res) => {
       .cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "strict",
         maxAge: 24 * 60 * 60 * 1000,
       })
       .setHeader("Authorization", `Bearer ${token}`) // Set header manual

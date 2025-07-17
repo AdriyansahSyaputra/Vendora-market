@@ -37,12 +37,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const { data } = await axios.post("/api/auth/login", credentials);
-      setUser(data);
+      const { data } = await axios.post("/api/auth/login", credentials, {
+        withCredentials: true,
+      });
+      setUser(data.user);
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Login failed:", error);
-      throw error.response;
+      throw error.response?.data || error;
     }
   };
 
