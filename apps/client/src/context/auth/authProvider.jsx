@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
-import { AuthContext } from "./authContext";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { AuthContext } from "./authContext.js";
 import axios from "axios";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,61 +11,60 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await axios.get("/api/auth/me");
         setUser(response.data);
-        setIsAuthenticated(true);
       } catch (error) {
-        console.error("Failed to fetch current user:", error);
-        setIsAuthenticated(false);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCurrentUser();
   }, []);
 
-  const register = async (userData) => {
-    try {
-      const { data } = await axios.post("/api/auth/register", userData);
-      setUser(data);
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Registration failed:", error);
-      throw error.response?.data || error;
-    }
-  };
-
-  const login = async (credentials) => {
+  // Fungsi-fungsi di-memoize dengan useCallback untuk stabilitas
+  const login = useCallback(async (credentials) => {
     try {
       const { data } = await axios.post("/api/auth/login", credentials, {
         withCredentials: true,
       });
       setUser(data.user);
-      setIsAuthenticated(true);
+      return data; // Return data agar bisa di-handle oleh komponen (untuk redirect)
     } catch (error) {
-      console.error("Login failed:", error);
-      throw error.response?.data || error;
+      throw new Error(error.response?.data?.message || "Login failed");
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const register = useCallback(async (userData) => {
+    try {
+      const { data } = await axios.post("/api/auth/register", userData);
+      setUser(data.user);
+      return data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || "Registrasi failed");
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
       await axios.post("/api/auth/logout");
       setUser(null);
-      setIsAuthenticated(false);
     } catch (error) {
       console.error("Logout failed:", error);
-      throw error.response?.data || error;
+      throw new Error(error.response?.data?.message || "Logout failed");
     }
-  };
+  }, []);
 
-  const value = {
-    user,
-    isAuthenticated,
-    loading,
-    register,
-    login,
-    logout,
-  };
+  // Gunakan useMemo untuk mencegah re-render yang tidak perlu pada consumer context
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      loading,
+      login,
+      register,
+      logout,
+    }),
+    [user, loading, login, register, logout]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

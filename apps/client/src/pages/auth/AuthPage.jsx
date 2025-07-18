@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAuth } from "@/context/auth/authContext";
+import { useNavigate } from "react-router-dom";
 
 const GoogleIcon = (props) => (
   <svg viewBox="0 0 48 48" {...props}>
@@ -36,6 +37,7 @@ const GoogleIcon = (props) => (
 const AuthForm = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [formError, setFormError] = useState(null);
+  const navigate = useNavigate();
 
   const { login, register: registerUser } = useAuth();
 
@@ -52,35 +54,27 @@ const AuthForm = () => {
   async function onSubmit(values) {
     setFormError(null);
     form.clearErrors();
-    try {
-      if (isRegister) {
-        await registerUser(values);
-        form.reset();
-        setIsRegister(false);
-      } else {
-        const credentials = {
-          identifier: values.username,
-          password: values.password,
-        };
-      console.log("Sending login:", credentials);
 
-        await login(credentials);
+    try {
+      const action = isRegister ? registerUser : login;
+      const credentials = isRegister
+        ? values
+        : { identifier: values.username, password: values.password };
+
+      const response = await action(credentials);
+
+      // Redirect jika ada, atau default ke dashboard jika sukses
+      if (response?.redirect) {
+        navigate(response.redirect);
+      } else if (!isRegister) {
+        navigate("/");
+      } else {
+        // Setelah registrasi, ganti ke mode login
+        setIsRegister(false);
+        form.reset();
       }
     } catch (error) {
-      const zodErrors = error?.data?.errors;
-
-      if (Array.isArray(zodErrors)) {
-        zodErrors.forEach((err) => {
-          const fieldName = err.path[1];
-          form.setError(fieldName, { message: err.message });
-        });
-      } else {
-        console.log("Login error response:", error.response?.data);
-
-        setFormError(
-          error?.response?.data?.message || "Terjadi kesalahan saat login."
-        );
-      }
+      setFormError(error.message);
     }
   }
 
@@ -222,7 +216,9 @@ const AuthForm = () => {
             disabled={isSubmitting}
             className="h-12 w-full rounded-lg bg-slate-900 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin m-auto" />}
+            {isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin m-auto" />
+            )}
             {isRegister ? "Create an account" : "Login"}
           </button>
         </form>

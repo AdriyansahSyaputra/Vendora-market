@@ -7,7 +7,8 @@ export const registerSchema = z.object({
       .min(3, { message: "Full name must be at least 3 characters long." }),
     username: z
       .string()
-      .min(3, { message: "Username must be at least 3 characters long." }),
+      .min(3, { message: "Username must be at least 3 characters long." })
+      .regex(/^[a-zA-Z0-9_]+$/, { message: "Username must be alphanumeric." }),
     email: z.string().email({ message: "Invalid email address." }),
     password: z
       .string()

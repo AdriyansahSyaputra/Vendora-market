@@ -2,51 +2,79 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
+/**
+ * @desc Middleware untuk memastikan pengguna terautentikasi.
+ * Memverifikasi token dari cookie atau header 'Authorization'.
+ * Jika valid, melampirkan payload token ke `req.user`.
+ */
 export const authenticateUser = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const tokenFromHeader = authHeader && authHeader.split(" ")[1];
+  const tokenFromHeader =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
   const tokenFromCookie = req.cookies.token;
 
   const token = tokenFromHeader || tokenFromCookie;
 
   if (!token) {
-    return res.status(401).json({ message: "No token provided. Unauthorized" });
+    return res
+      .status(401)
+      .json({ message: "Access denied. No token provided." });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // Payload dari token (id, role, dll)
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid or expired token." });
+    return res
+      .status(401)
+      .json({ message: "Token is invalid or has expired." });
   }
 };
 
+/**
+ * @desc Middleware untuk otentikasi opsional.
+ * Jika token ada dan valid, lampirkan data user. Jika tidak, lanjutkan saja.
+ * Berguna untuk route yang menampilkan konten berbeda untuk user login dan tamu.
+ */
 export const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const tokenFromHeader = authHeader && authHeader.split(" ")[1];
+  const tokenFromHeader =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
   const tokenFromCookie = req.cookies.token;
 
   const token = tokenFromHeader || tokenFromCookie;
 
-  if (!token) return next();
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-  } catch (err) {
-    // ignore error, user tetap anonym
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+    } catch (err) {
+      // Abaikan error, anggap pengguna sebagai tamu
+      req.user = null;
+    }
   }
 
   next();
 };
 
+/**
+ * @desc Middleware untuk memberikan otorisasi berdasarkan peran (role).
+ * @param {...String} allowedRoles - Daftar peran yang diizinkan untuk mengakses route.
+ * @returns Middleware function
+ * @example router.get('/admin-only', authenticateUser, authorizeRoles('admin'), getAdminData);
+ */
 export const authorizeRoles =
   (...allowedRoles) =>
   (req, res, next) => {
+    // Diasumsikan authenticateUser sudah dijalankan sebelumnya
     if (!req.user || !allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
-        message: "You are not authorized to perform this action.",
+        message: "Access denied. You do not have permission for this resource.",
       });
     }
     next();
