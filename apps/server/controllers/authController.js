@@ -1,5 +1,5 @@
 import User from "../models/userModel.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
@@ -54,8 +54,13 @@ export const registerUser = async (req, res) => {
         .json({ message: "Email or username is already registered." });
     }
 
-    const user = await User.create({ fullName, username, email, password });
-    sendTokenResponse(user, 201, res);
+    await User.create({
+      fullName,
+      username: username.toLowerCase(),
+      email,
+      password,
+    });
+    res.status(201).json({ message: "Register berhasil, silakan login." });
   } catch (error) {
     console.error("REGISTER ERROR:", error);
     res.status(500).json({ message: "An internal server error occurred." });
@@ -70,7 +75,7 @@ export const login = async (req, res) => {
   if (!identifier || !password) {
     return res
       .status(400)
-      .json({ message: "Identifier and password are required." });
+      .json({ message: "Email or username and password are required." });
   }
 
   try {
@@ -84,7 +89,7 @@ export const login = async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res
         .status(401)
-        .json({ message: "Invalid identifier or password." });
+        .json({ message: "Invalid email/username or password." });
     }
 
     sendTokenResponse(user, 200, res);

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Middleware untuk logging semua request (untuk debugging)
 app.use((req, res, next) => {

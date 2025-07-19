@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MailIcon, LockIcon, User, Loader2 } from "lucide-react";
+import { MailIcon, User, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/auth/authContext";
 import { useNavigate } from "react-router-dom";
+import PasswordInput from "@/components/Elements/PasswordInput";
 
 const GoogleIcon = (props) => (
   <svg viewBox="0 0 48 48" {...props}>
@@ -47,6 +48,8 @@ const AuthForm = () => {
       username: "",
       email: "",
       password: "",
+      confirmPassword: "",
+      identifier: "",
     },
   });
   const { isSubmitting } = form.formState;
@@ -59,7 +62,7 @@ const AuthForm = () => {
       const action = isRegister ? registerUser : login;
       const credentials = isRegister
         ? values
-        : { identifier: values.username, password: values.password };
+        : { identifier: values.identifier, password: values.password };
 
       const response = await action(credentials);
 
@@ -74,7 +77,17 @@ const AuthForm = () => {
         form.reset();
       }
     } catch (error) {
-      setFormError(error.message);
+      if (error && Array.isArray(error.errors)) {
+        error.errors.forEach((err) => {
+          const fieldName = err.path[1];
+          if (fieldName) {
+            form.setError(fieldName, { type: "server", message: err.message });
+          }
+        });
+      } else {
+        // Jika tidak ada array 'errors', tampilkan pesan umum
+        setFormError(error?.message || "An error occurred during login.");
+      }
     }
   }
 
@@ -144,7 +157,7 @@ const AuthForm = () => {
 
           <FormField
             control={form.control}
-            name="username"
+            name={isRegister ? "username" : "identifier"}
             render={({ field }) => (
               <FormItem>
                 <FormControl>
@@ -153,7 +166,7 @@ const AuthForm = () => {
                     <Input
                       className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
                       placeholder={
-                        isRegister ? "Username" : "Username atau Email"
+                        isRegister ? "Username" : "Username or Email"
                       }
                       {...field}
                     />
@@ -192,20 +205,28 @@ const AuthForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <div className="relative">
-                    <LockIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                    <Input
-                      type="password"
-                      className="h-12 w-full rounded-lg border border-slate-300 bg-transparent pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500"
-                      placeholder="Password"
-                      {...field}
-                    />
-                  </div>
+                  <PasswordInput placeholder="Password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {isRegister && (
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <PasswordInput placeholder="Confirm Password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           {/* Tampilkan pesan kesalahan jika ada */}
           {formError && (
             <p className="text-center text-xs text-red-500">{formError}</p>
