@@ -35,6 +35,7 @@ import AdvertisementPage from "./pages/company/Advertisement/AdvertisementPage";
 import VoucherPage from "./pages/company/Advertisement/VoucherPage";
 import LogActivityPage from "./pages/company/LogActivityPage";
 import AuthPage from "./pages/auth/AuthPage";
+import SellerRequestPage from "./pages/client/SellerRequestPage";
 
 const App = () => {
   return (
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/account" element={<AccountPageMobile />} />
         <Route path="/settings" element={<SettingPageMobile />} />
         <Route path="/settings/desktop" element={<SettingPageDesktop />} />
+        <Route path="/seller-request" element={<SellerRequestPage />} />
 
         {/* Seller routes */}
         <Route path="/store/dashboard" element={<DashboardPage />} />
