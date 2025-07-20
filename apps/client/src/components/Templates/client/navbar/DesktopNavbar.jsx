@@ -23,7 +23,7 @@ const DesktopNavbar = () => {
     },
     {
       name: "Jadi Seller",
-      link: "/seller",
+      link: "/seller-request",
     },
   ];
 
