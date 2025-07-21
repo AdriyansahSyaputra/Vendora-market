@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -7,7 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -29,6 +28,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  FormLabel,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,37 +49,13 @@ const countries = [
   { value: "JP", label: "Japan", flag: "🇯🇵" },
 ];
 
-const AddressSection = ({ formData, setFormData }) => {
+const AddressSection = ({ form }) => {
+  // State for the multi-select Popover, this is a good use case for local UI state
   const [open, setOpen] = useState(false);
 
-  const selectedOperatingAreas = useMemo(() => {
-    return countries.filter((c) =>
-      (formData.operatingAreas || []).includes(c.value)
-    );
-  }, [formData.operatingAreas]);
-
-  const handleOperatingAreaSelect = (countryValue) => {
-    const currentAreas = formData.operatingAreas || [];
-    const newAreas = currentAreas.includes(countryValue)
-      ? currentAreas.filter((v) => v !== countryValue)
-      : [...currentAreas, countryValue];
-    setFormData({ ...formData, operatingAreas: newAreas });
-  };
-
-  const handleLocationChange = (value) => {
-    setFormData({
-      ...formData,
-      address: { ...formData.address, location: value },
-    });
-  };
-
-  const handleAddressInputChange = (e) => {
-    const { id, value } = e.target;
-    setFormData({
-      ...formData,
-      address: { ...formData.address, [id]: value },
-    });
-  };
+  // Use `watch` to get the `location` value in real-time
+  // This will trigger a re-render when its value changes, which is what we want for conditional UI
+  const location = form.watch("location");
 
   return (
     <Card className="w-full">
@@ -84,144 +66,214 @@ const AddressSection = ({ formData, setFormData }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="location">Business Location (Country)</Label>
-          <Select
-            onValueChange={handleLocationChange}
-            value={formData.address?.location || ""}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select business location country..." />
-            </SelectTrigger>
-            <SelectContent>
-              {countries.map((country) => (
-                <SelectItem key={country.value} value={country.value}>
-                  <span className="mr-2">{country.flag}</span> {country.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="street">Street Address</Label>
-            <Input
-              id="street"
-              placeholder="Street name, house number, etc."
-              onChange={handleAddressInputChange}
-              value={formData.address?.street || ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="village">Village / Sub-district</Label>
-            <Input
-              id="village"
-              placeholder="e.g., West Cilandak"
-              onChange={handleAddressInputChange}
-              value={formData.address?.village || ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="district">District</Label>
-            <Input
-              id="district"
-              placeholder="e.g., Cilandak"
-              onChange={handleAddressInputChange}
-              value={formData.address?.district || ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">City / Regency</Label>
-            <Input
-              id="city"
-              placeholder="e.g., South Jakarta"
-              onChange={handleAddressInputChange}
-              value={formData.address?.city || ""}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="postalCode">Postal Code</Label>
-            <Input
-              id="postalCode"
-              placeholder="e.g., 12430"
-              onChange={handleAddressInputChange}
-              value={formData.address?.postalCode || ""}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Operating Area (Sales)</Label>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between h-auto min-h-[40px]"
+        {/* === Location Select (Single Choice) === */}
+        <FormField
+          control={form.control}
+          name="location" // Field name matches the Zod schema
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Business Location (Country)</FormLabel>
+              <Select
+                onValueChange={field.onChange} // Use the handler from react-hook-form
+                defaultValue={field.value}
               >
-                <div className="flex flex-wrap gap-1">
-                  {selectedOperatingAreas.length > 0 ? (
-                    selectedOperatingAreas.map((area) => (
-                      <span
-                        key={area.value}
-                        className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-md px-2 py-0.5 text-sm"
-                      >
-                        {area.flag} {area.label}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOperatingAreaSelect(area.value);
-                          }}
-                        />
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-muted-foreground">
-                      Select countries...
-                    </span>
-                  )}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-              <Command>
-                <CommandInput placeholder="Search country..." />
-                <CommandEmpty>No country found.</CommandEmpty>
-                <CommandList>
-                  <CommandGroup>
-                    {countries.map((country) => (
-                      <CommandItem
-                        key={country.value}
-                        value={country.label}
-                        onSelect={() => {
-                          handleOperatingAreaSelect(country.value);
-                          setOpen(true); // Keep popover open
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            (formData.operatingAreas || []).includes(
-                              country.value
-                            )
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <span className="mr-2">{country.flag}</span>
-                        {country.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select business location country..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.value} value={country.value}>
+                      <span className="mr-2">{country.flag}</span>{" "}
+                      {country.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* === Conditional Address Fields === */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Common Field */}
+          <FormField
+            control={form.control}
+            name="address.street"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Street Address</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Street name, house number, etc."
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Indonesia-Specific Fields */}
+          {location === "ID" && (
+            <>
+              <FormField
+                control={form.control}
+                name="address.village"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Village / Sub-district</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., West Cilandak" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address.district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Cilandak" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {/* Common Fields */}
+          <FormField
+            control={form.control}
+            name="address.city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City / Regency</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., South Jakarta" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* US-Specific Field (Example) */}
+          {location === "US" && (
+            <FormField
+              control={form.control}
+              name="address.state" // You might need to add this to your Zod schema
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., California" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="address.postalCode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Postal Code</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., 12430" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
+
+        
+        <FormField
+          control={form.control}
+          name="operatingArea"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Operating Area (Sales)</FormLabel>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between h-auto min-h-[40px]",
+                        !field.value?.length && "text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex flex-wrap gap-1">
+                        {field.value?.length > 0
+                          ? countries
+                              .filter((c) => field.value.includes(c.value))
+                              .map((area) => (
+                                <span
+                                  key={area.value}
+                                  className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-md px-2 py-0.5 text-sm"
+                                >
+                                  {area.flag} {area.label}
+                                </span>
+                              ))
+                          : "Select countries..."}
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search country..." />
+                    <CommandList>
+                      <CommandEmpty>No country found.</CommandEmpty>
+                      <CommandGroup>
+                        {countries.map((country) => (
+                          <CommandItem
+                            key={country.value}
+                            value={country.label}
+                            onSelect={() => {
+                              const currentValues = field.value || [];
+                              const newValue = currentValues.includes(
+                                country.value
+                              )
+                                ? currentValues.filter(
+                                    (v) => v !== country.value
+                                  )
+                                : [...currentValues, country.value];
+                              field.onChange(newValue); // Directly call field.onChange
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                field.value?.includes(country.value)
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            <span className="mr-2">{country.flag}</span>
+                            {country.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

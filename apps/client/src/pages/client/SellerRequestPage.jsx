@@ -11,50 +11,100 @@ import AddressSection from "@/components/Layouts/client/SellerRequest/AddressSec
 import StoreInfoSection from "@/components/Layouts/client/SellerRequest/StoreInfoSection";
 import AgreementSection from "@/components/Layouts/client/SellerRequest/AgreementSection";
 import DocumentUploadSection from "@/components/Layouts/client/SellerRequest/DocumentUploadSection";
+import { fileToBase64 } from "@/utils/fileToBase64";
+import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
+import { useAuth } from "@/context/auth/authContext";
 
 const SellerRequestPage = () => {
-  const [formData, setFormData] = useState({
-    phone: "",
-    storeName: "",
-    storeDescription: "",
-    categories: [],
-    address: {
-      location: "",
-      street: "",
-      village: "",
-      district: "",
-      city: "",
-      postalCode: "",
-    },
-    operatingAreas: [],
-    documents: {},
-  });
-  const [isAgreed, setIsAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+
+  const form = useForm({
+    mode: "onChange",
+    defaultValues: {
+      fullName: user?.fullName || "",
+      email: user?.email || "",
+      phone: "",
+      storeName: "",
+      storeDescription: "",
+      categories: [],
+      address: {
+        location: "",
+        street: "",
+        village: "",
+        district: "",
+        city: "",
+        postalCode: "",
+      },
+      operatingAreas: [],
+      documents: {
+        ktp: null,
+        npwp: null,
+        passport: null,
+        businessLicense: null,
+      },
+      agreement: false,
+    },
+  });
+
+  const watchedValues = form.watch();
 
   // Simple validation to enable the submit button
   const isSubmittable = useMemo(() => {
-    const { phone, storeName, storeDescription, address, documents } = formData;
-    const isPersonalInfoValid = phone.length > 8;
+    const {
+      phone,
+      storeName,
+      storeDescription,
+      categories,
+      location,
+      address,
+      operatingArea,
+      documents,
+      agreement,
+    } = watchedValues;
+
+    // Pengecekan dasar apakah field sudah diisi
+    const isPersonalInfoValid = phone?.length > 9;
     const isStoreInfoValid =
-      storeName && storeDescription && (formData.categories || []).length > 0;
+      storeName && storeDescription && categories?.length > 0;
     const isAddressValid =
-      address?.location &&
-      address?.street &&
-      address?.city &&
-      address?.postalCode;
-    const isDocumentValid = address?.location ? !!documents?.identity : false;
+      location && address?.street && address?.city && address?.postalCode;
+    const isOperatingAreaValid = operatingArea?.length > 0;
+
+    // Pengecekan dokumen kondisional
+    let isDocumentValid = false;
+    if (location === "ID") {
+      isDocumentValid = !!documents?.ktp && !!documents?.npwp;
+    } else if (location) {
+      // Jika lokasi bukan ID tapi sudah dipilih
+      isDocumentValid = !!documents?.passport && !!documents?.businessLicense;
+    }
 
     return (
       isPersonalInfoValid &&
       isStoreInfoValid &&
       isAddressValid &&
+      isOperatingAreaValid &&
       isDocumentValid &&
-      isAgreed
+      agreement
     );
-  }, [formData, isAgreed]);
+  }, [watchedValues]);
 
-  const handleSubmit = (e) => {
+  const handleFileChange = async (fieldName, file) => {
+    if (!file) {
+      form.setValue(fieldName, null);
+      return;
+    }
+    try {
+      const base64String = await fileToBase64(file);
+      form.setValue(fieldName, base64String);
+    } catch (error) {
+      toast.error("Gagal memproses file.");
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isSubmittable) {
       toast.error("Form Incomplete", {
@@ -64,17 +114,48 @@ const SellerRequestPage = () => {
     }
 
     setIsLoading(true);
-    console.log("Submitting form data:", formData);
+    const formData = form.getValues();
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Request Sent!", {
-        description:
-          "Your seller application is being processed. We will notify you via email.",
+    try {
+      const response = await fetch("/api/client/apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify(formData),
       });
-      // Here you can reset the form or redirect the user
-    }, 2000);
+
+      const result = await response.json();
+
+      // --- Penanganan Error dari Backend ---
+      if (!response.ok) {
+        // Jika backend mengirim detail error (dari Zod), tampilkan semuanya
+        if (result.details && Array.isArray(result.details)) {
+          result.details.forEach((err) => {
+            toast.error(`Error pada field: ${err.path}`, {
+              description: err.message,
+            });
+          });
+        } else {
+          // Jika hanya ada pesan error umum
+          throw new Error(result.message || "Terjadi kesalahan pada server.");
+        }
+        return; // Hentikan eksekusi jika ada error
+      }
+
+      toast.success("Request Terkirim!", {
+        description:
+          "Aplikasi seller Anda sedang diproses. Kami akan memberitahu Anda via email.",
+      });
+      form.reset();
+    } catch (error) {
+      toast.error("Gagal Mengirim Aplikasi", {
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -103,24 +184,22 @@ const SellerRequestPage = () => {
               </p>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <PersonalInfoSection
-                formData={formData}
-                setFormData={setFormData}
-              />
-              <StoreInfoSection formData={formData} setFormData={setFormData} />
-              <AddressSection formData={formData} setFormData={setFormData} />
-              <DocumentUploadSection
-                formData={formData}
-                setFormData={setFormData}
-              />
-              <AgreementSection
-                isAgreed={isAgreed}
-                setIsAgreed={setIsAgreed}
-                isSubmittable={isSubmittable}
-                isLoading={isLoading}
-              />
-            </form>
+            <Form {...form}>
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <PersonalInfoSection form={form} />
+                <StoreInfoSection form={form} />
+                <AddressSection form={form} />
+                <DocumentUploadSection
+                  form={form}
+                  onFileChange={handleFileChange}
+                />
+                <AgreementSection
+                  isSubmittable={isSubmittable}
+                  isLoading={isLoading}
+                  form={form}
+                />
+              </form>
+            </Form>
           </div>
         </main>
 

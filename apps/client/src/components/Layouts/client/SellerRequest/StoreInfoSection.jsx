@@ -5,6 +5,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,13 +26,17 @@ const productCategories = [
   { id: "health", label: "Health & Beauty" },
 ];
 
-const StoreInfoSection = ({ formData, setFormData }) => {
+const StoreInfoSection = ({ form }) => {
   const handleCategoryChange = (categoryId) => {
-    const currentCategories = formData.categories || [];
+    const currentCategories = form.getValues("categories") || [];
     const newCategories = currentCategories.includes(categoryId)
       ? currentCategories.filter((id) => id !== categoryId)
       : [...currentCategories, categoryId];
-    setFormData({ ...formData, categories: newCategories });
+
+    form.setValue("categories", newCategories, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
@@ -38,51 +48,85 @@ const StoreInfoSection = ({ formData, setFormData }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="storeName">Store Name</Label>
-          <Input
-            id="storeName"
-            placeholder="e.g., Awesome Gadget Store"
-            value={formData.storeName || ""}
-            onChange={(e) =>
-              setFormData({ ...formData, storeName: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="storeDescription">Store Description</Label>
-          <Textarea
-            id="storeDescription"
-            placeholder="Briefly describe your store, the products you sell, and your unique selling points."
-            value={formData.storeDescription || ""}
-            onChange={(e) =>
-              setFormData({ ...formData, storeDescription: e.target.value })
-            }
-            className="min-h-[120px]"
-            required
-          />
-        </div>
-        <div className="space-y-4">
-          <Label>Product Categories</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {productCategories.map((category) => (
-              <div key={category.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={category.id}
-                  checked={(formData.categories || []).includes(category.id)}
-                  onCheckedChange={() => handleCategoryChange(category.id)}
-                />
-                <label
-                  htmlFor={category.id}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {category.label}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="storeName"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className="space-y-2">
+                  <Label htmlFor="storeName">Store Name</Label>
+                  <Input
+                    id="storeName"
+                    placeholder="e.g., Awesome Gadget Store"
+                    {...field}
+                    required
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="storeDescription"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className="space-y-2">
+                  <Label htmlFor="storeDescription">Store Description</Label>
+                  <Textarea
+                    id="storeDescription"
+                    placeholder="Briefly describe your store, the products you sell, and your unique selling points."
+                    {...field}
+                    className="min-h-[120px]"
+                    required
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="categories"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className="space-y-4">
+                  <Label>Product Categories</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {productCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={category.id}
+                          checked={(field.value || []).includes(category.id)}
+                          onCheckedChange={() =>
+                            handleCategoryChange(category.id)
+                          }
+                        />
+                        <label
+                          htmlFor={category.id}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {category.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

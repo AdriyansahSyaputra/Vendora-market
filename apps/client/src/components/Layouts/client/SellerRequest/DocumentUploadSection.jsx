@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -6,153 +6,169 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  FormLabel,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, X } from "lucide-react";
 
 // A small component to handle file input UI
-const FileInput = ({
-  id,
-  label,
-  required,
-  onFileChange,
-  file,
-  onFileRemove,
-}) => {
+const FileInput = ({ name, label, required, onFileChange, form }) => {
   const [preview, setPreview] = useState(null);
+  const fileValue = form.watch(name);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      onFileChange(id, selectedFile);
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
-      setPreview(URL.createObjectURL(selectedFile));
+  useEffect(() => {
+    if (fileValue && typeof fileValue === "string") {
+      setPreview(fileValue);
+    } else {
+      setPreview(null);
+    }
+  }, [fileValue]);
+
+  const handleLocalFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await onFileChange(name, file);
     }
   };
 
-  const handleRemove = () => {
-    onFileRemove(id);
-    if (preview) {
-      URL.revokeObjectURL(preview);
-      setPreview(null);
-    }
-    const input = document.getElementById(id);
-    if (input) input.value = "";
+  const handleRemoveFile = () => {
+    onFileChange(name, null);
   };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>
+    <FormItem>
+      <FormLabel>
         {label} {required && <span className="text-destructive">*</span>}
-      </Label>
-      {!file ? (
-        <div className="flex items-center justify-center w-full">
-          <label
-            htmlFor={id}
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-          >
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-              <p className="mb-2 text-sm text-muted-foreground">
-                <span className="font-semibold">Click to upload</span>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                PNG, JPG, or PDF (MAX. 5MB)
-              </p>
-            </div>
-            <Input
-              id={id}
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-              accept=".png,.jpg,.jpeg,.pdf"
-            />
-          </label>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
-          <div className="flex items-center gap-3 truncate">
-            <FileText className="h-6 w-6 text-primary" />
-            <div className="flex flex-col truncate">
-              <span className="text-sm font-medium truncate">{file.name}</span>
-              <a
-                href={preview}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline"
-              >
-                View Preview
-              </a>
-            </div>
+      </FormLabel>
+      <FormControl>
+        {!preview ? (
+          <div className="flex items-center justify-center w-full">
+            <label
+              htmlFor={name}
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
+            >
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
+                <p className="mb-2 text-sm text-muted-foreground">
+                  <span className="font-semibold">Klik untuk mengunggah</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG, atau PDF (MAX. 5MB)
+                </p>
+              </div>
+              <Input
+                id={name}
+                type="file"
+                className="hidden"
+                accept=".png,.jpg,.jpeg,.pdf"
+                onChange={handleLocalFileChange}
+              />
+            </label>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleRemove}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3 truncate">
+              <FileText className="h-6 w-6 text-primary" />
+              <div className="flex flex-col truncate">
+                <span className="text-sm font-medium truncate">
+                  File terpilih
+                </span>
+                <a
+                  href={preview}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Lihat Pratinjau
+                </a>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              onClick={handleRemoveFile}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </FormControl>
+      <FormMessage />
+    </FormItem>
   );
 };
 
-const DocumentUploadSection = ({ formData, setFormData }) => {
-  const location = formData.address?.location;
+const DocumentUploadSection = ({ form, onFileChange }) => {
+  const location = form.watch("location");
   const isIndonesia = location === "ID";
 
-  const handleFileChange = (id, file) => {
-    setFormData({
-      ...formData,
-      documents: { ...formData.documents, [id]: file },
-    });
-  };
-
-  const handleFileRemove = (id) => {
-    const newDocuments = { ...formData.documents };
-    delete newDocuments[id];
-    setFormData({ ...formData, documents: newDocuments });
-  };
+  if (!location) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Unggah Dokumen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-muted-foreground py-8">
+            Pilih lokasi bisnis Anda terlebih dahulu untuk melihat dokumen yang
+            diperlukan.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>Document Upload</CardTitle>
+        <CardTitle>Unggah Dokumen</CardTitle>
         <CardDescription>
-          Upload the required documents for verification. Ensure the images are
-          clear and not blurry.
+          Unggah dokumen yang diperlukan untuk verifikasi. Pastikan gambar jelas
+          dan tidak buram.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {location ? (
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {isIndonesia ? (
           <>
             <FileInput
-              id="identity"
-              label={
-                isIndonesia ? "Upload National ID (KTP)" : "Upload Passport"
-              }
+              name="documents.ktp"
+              label="Kartu Tanda Penduduk (KTP)"
               required
-              onFileChange={handleFileChange}
-              onFileRemove={handleFileRemove}
-              file={formData.documents?.identity}
+              form={form}
+              onFileChange={onFileChange}
             />
             <FileInput
-              id="business"
-              label={
-                isIndonesia
-                  ? "Upload Tax ID / Business License (Optional)"
-                  : "Upload Business Registration Document (Optional)"
-              }
-              onFileChange={handleFileChange}
-              onFileRemove={handleFileRemove}
-              file={formData.documents?.business}
+              name="documents.npwp"
+              label="NPWP"
+              required
+              form={form}
+              onFileChange={onFileChange}
             />
           </>
         ) : (
-          <div className="text-center text-muted-foreground py-8">
-            Please select your business location country first to see the
-            required documents.
-          </div>
+          <>
+            <FileInput
+              name="documents.passport"
+              label="Paspor"
+              required
+              form={form}
+              onFileChange={onFileChange}
+            />
+            <FileInput
+              name="documents.businessLicense"
+              label="Izin Usaha"
+              required
+              form={form}
+              onFileChange={onFileChange}
+            />
+          </>
         )}
       </CardContent>
     </Card>
