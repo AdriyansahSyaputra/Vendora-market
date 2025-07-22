@@ -1,6 +1,19 @@
 import { z } from "zod";
 
 const countryCodes = ["ID", "SG", "MY", "US", "GB", "AU", "JP"];
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+// Fungsi helper untuk mendapatkan ukuran byte dari string Base64
+const getBase64SizeInBytes = (base64String) => {
+  if (!base64String) return 0;
+  // Hapus header data URI (misal: "data:image/png;base64,")
+  const string = base64String.split(",")[1] || base64String;
+  // Perhitungan ukuran byte dari string Base64
+  const sizeInBytes =
+    (string.length * 3) / 4 -
+    (string.endsWith("==") ? 2 : string.endsWith("=") ? 1 : 0);
+  return sizeInBytes;
+};
 
 export const sellerApplicationSchema = z
   .object({
@@ -33,10 +46,35 @@ export const sellerApplicationSchema = z
         message: "At least one operating area is required.",
       }),
       documents: z.object({
-        ktp: z.string().optional(),
-        npwp: z.string().optional(),
-        passport: z.string().optional(),
-        businessLicense: z.string().optional(),
+        ktp: z
+          .string()
+          .optional()
+          .refine((val) => !val || getBase64SizeInBytes(val) <= MAX_FILE_SIZE, {
+            message: `KTP file must be less than 2MB.`,
+          }),
+        npwp: z
+          .string()
+          .optional()
+          .refine((val) => !val || getBase64SizeInBytes(val) <= MAX_FILE_SIZE, {
+            message: `NPWP file must be less than 2MB.`,
+          }),
+        passport: z
+          .string()
+          .optional()
+          .refine(
+            (val) => {
+              return !val || getBase64SizeInBytes(val) <= MAX_FILE_SIZE;
+            },
+            {
+              message: `Passport file must be less than 2MB.`,
+            }
+          ),
+        businessLicense: z
+          .string()
+          .optional()
+          .refine((val) => !val || getBase64SizeInBytes(val) <= MAX_FILE_SIZE, {
+            message: `Business license file must be less than 2MB.`,
+          }),
       }),
       terms: z.boolean().refine((val) => val, {
         message: "You must agree to the terms and conditions.",

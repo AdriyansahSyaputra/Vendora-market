@@ -73,10 +73,7 @@ const AddressSection = ({ form }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Business Location (Country)</FormLabel>
-              <Select
-                onValueChange={field.onChange} // Use the handler from react-hook-form
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select business location country..." />
@@ -195,7 +192,6 @@ const AddressSection = ({ form }) => {
           />
         </div>
 
-        
         <FormField
           control={form.control}
           name="operatingArea"
@@ -204,32 +200,40 @@ const AddressSection = ({ form }) => {
               <FormLabel>Operating Area (Sales)</FormLabel>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between h-auto min-h-[40px]",
-                        !field.value?.length && "text-muted-foreground"
-                      )}
-                    >
-                      <div className="flex flex-wrap gap-1">
-                        {field.value?.length > 0
-                          ? countries
-                              .filter((c) => field.value.includes(c.value))
-                              .map((area) => (
-                                <span
-                                  key={area.value}
-                                  className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-md px-2 py-0.5 text-sm"
-                                >
-                                  {area.flag} {area.label}
-                                </span>
-                              ))
-                          : "Select countries..."}
-                      </div>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className={cn(
+                      "w-full justify-between h-auto min-h-[40px]",
+                      !field.value?.length && "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex flex-wrap gap-1">
+                      {field.value?.length > 0
+                        ? countries
+                            .filter((c) => field.value.includes(c.value))
+                            .map((area) => (
+                              <span
+                                key={area.value}
+                                className="flex items-center gap-1.5 bg-secondary text-secondary-foreground rounded-md px-2 py-0.5 text-sm"
+                              >
+                                {area.flag} {area.label}
+                                <X
+                                  className="h-3 w-3 cursor-pointer rounded-full hover:bg-muted"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent Popover from opening
+                                    const newValue = field.value.filter(
+                                      (v) => v !== area.value
+                                    );
+                                    field.onChange(newValue);
+                                  }}
+                                />
+                              </span>
+                            ))
+                        : "Select countries..."}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
@@ -250,7 +254,7 @@ const AddressSection = ({ form }) => {
                                     (v) => v !== country.value
                                   )
                                 : [...currentValues, country.value];
-                              field.onChange(newValue); // Directly call field.onChange
+                              field.onChange(newValue);
                             }}
                           >
                             <Check

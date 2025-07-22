@@ -101,7 +101,7 @@ const DesktopNavbar = () => {
           {navLinks.map((link) => (
             <Link
               to={link.link}
-              key={link}
+              key={link.link}
               href="#"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >

@@ -16,6 +16,8 @@ import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/context/auth/authContext";
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 const SellerRequestPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -29,15 +31,15 @@ const SellerRequestPage = () => {
       storeName: "",
       storeDescription: "",
       categories: [],
+      location: "",
       address: {
-        location: "",
         street: "",
         village: "",
         district: "",
         city: "",
         postalCode: "",
       },
-      operatingAreas: [],
+      operatingArea: [],
       documents: {
         ktp: null,
         npwp: null,
@@ -93,18 +95,29 @@ const SellerRequestPage = () => {
 
   const handleFileChange = async (fieldName, file) => {
     if (!file) {
-      form.setValue(fieldName, null);
+      form.setValue(fieldName, null, { shouldValidate: true });
       return;
     }
+
+    if(file.size > MAX_FILE_SIZE) {
+      toast.error("File to large.", {
+        description: "Please upload a file smaller than 2MB.",
+      });
+      form.setValue(fieldName, null, { shouldValidate: true });
+      return;
+    }
+
     try {
       const base64String = await fileToBase64(file);
-      form.setValue(fieldName, base64String);
+      form.setValue(fieldName, base64String, { shouldValidate: true });
     } catch (error) {
       toast.error("Gagal memproses file.");
     }
   };
 
   const handleSubmit = async (e) => {
+    // Debug isi form
+    console.log("Form Values:", form.getValues());
     e.preventDefault();
     if (!isSubmittable) {
       toast.error("Form Incomplete", {
@@ -121,7 +134,7 @@ const SellerRequestPage = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          // Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -130,7 +143,6 @@ const SellerRequestPage = () => {
 
       // --- Penanganan Error dari Backend ---
       if (!response.ok) {
-        // Jika backend mengirim detail error (dari Zod), tampilkan semuanya
         if (result.details && Array.isArray(result.details)) {
           result.details.forEach((err) => {
             toast.error(`Error pada field: ${err.path}`, {
@@ -138,10 +150,9 @@ const SellerRequestPage = () => {
             });
           });
         } else {
-          // Jika hanya ada pesan error umum
           throw new Error(result.message || "Terjadi kesalahan pada server.");
         }
-        return; // Hentikan eksekusi jika ada error
+        return;
       }
 
       toast.success("Request Terkirim!", {
