@@ -7,13 +7,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  FormLabel,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const PersonalInfoSection = ({ form }) => {
   return (
@@ -32,16 +32,14 @@ const PersonalInfoSection = ({ form }) => {
             name="fullName"
             render={({ field }) => (
               <FormItem>
+                <FormLabel htmlFor="fullName">Full Name</FormLabel>
                 <FormControl>
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      readOnly
-                      className="bg-muted/50 cursor-not-allowed"
-                      {...field}
-                    />
-                  </div>
+                  <Input
+                    id="fullName"
+                    readOnly
+                    className="bg-muted/50 cursor-not-allowed"
+                    {...field}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -52,17 +50,15 @@ const PersonalInfoSection = ({ form }) => {
             name="email"
             render={({ field }) => (
               <FormItem>
+                <FormLabel htmlFor="email">Email Address</FormLabel>
                 <FormControl>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      readOnly
-                      className="bg-muted/50 cursor-not-allowed"
-                      {...field}
-                    />
-                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    readOnly
+                    className="bg-muted/50 cursor-not-allowed"
+                    {...field}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -73,17 +69,15 @@ const PersonalInfoSection = ({ form }) => {
             name="phone"
             render={({ field }) => (
               <FormItem>
+                <FormLabel htmlFor="phone">Phone Number</FormLabel>
                 <FormControl>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="e.g., 081234567890"
-                      {...field}
-                      required
-                    />
-                  </div>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="e.g., 081234567890"
+                    {...field}
+                    required
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

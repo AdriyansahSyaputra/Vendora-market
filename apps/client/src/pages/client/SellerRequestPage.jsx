@@ -46,7 +46,7 @@ const SellerRequestPage = () => {
         passport: null,
         businessLicense: null,
       },
-      agreement: false,
+      terms: false,
     },
   });
 
@@ -63,7 +63,7 @@ const SellerRequestPage = () => {
       address,
       operatingArea,
       documents,
-      agreement,
+      terms,
     } = watchedValues;
 
     // Pengecekan dasar apakah field sudah diisi
@@ -89,7 +89,7 @@ const SellerRequestPage = () => {
       isAddressValid &&
       isOperatingAreaValid &&
       isDocumentValid &&
-      agreement
+      terms
     );
   }, [watchedValues]);
 
@@ -99,7 +99,7 @@ const SellerRequestPage = () => {
       return;
     }
 
-    if(file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_FILE_SIZE) {
       toast.error("File to large.", {
         description: "Please upload a file smaller than 2MB.",
       });
@@ -128,41 +128,82 @@ const SellerRequestPage = () => {
 
     setIsLoading(true);
     const formData = form.getValues();
+    const location = formData.location;
+
+    // Debug isi formData
+    console.log("Form Data:", formData);
+
+    // Hapus field dokumen yang tidak diperlukan
+    if (location === "ID") {
+       console.log("📍 Lokasi: Indonesia - Mulai upload KTP dan NPWP");
+      delete formData.documents.passport;
+      delete formData.documents.businessLicense;
+    } else {
+       console.log(
+         "🌐 Lokasi: Internasional - Mulai upload Passport dan Business License"
+       );
+      delete formData.documents.ktp;
+      delete formData.documents.npwp;
+    }
 
     try {
       const response = await fetch("/api/client/apply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Authorization: `Bearer ${user?.token}`,
         },
         body: JSON.stringify(formData),
       });
 
       const result = await response.json();
+       console.log("✅ Server Result:", result);
+       console.log("🌐 Response Status:", response.status);
 
       // --- Penanganan Error dari Backend ---
-      if (!response.ok) {
-        if (result.details && Array.isArray(result.details)) {
-          result.details.forEach((err) => {
-            toast.error(`Error pada field: ${err.path}`, {
-              description: err.message,
-            });
-          });
-        } else {
-          throw new Error(result.message || "Terjadi kesalahan pada server.");
-        }
-        return;
-      }
+     if (!response.ok) {
+       // 1. Cek dulu apakah ini error validasi Zod (ada 'details')
+       if (result.details && Array.isArray(result.details)) {
+         toast.error("Submission Failed", {
+           description: "Please correct the errors highlighted below.",
+         });
 
-      toast.success("Request Terkirim!", {
+         // Loop dan atur error per field
+         result.details.forEach((err) => {
+           const fieldName = err.path.join(".");
+           // Untuk Zod di backend yang memvalidasi `body`, pathnya mungkin ['body', 'phone']
+           // jadi kita perlu menghapus 'body' jika ada.
+           const finalFieldName = fieldName.startsWith("body.")
+             ? fieldName.substring(5)
+             : fieldName;
+
+           form.setError(finalFieldName, {
+             type: "server",
+             message: err.message,
+           });
+         });
+       }
+       // 2. Jika bukan error Zod, berarti ini adalah error umum dari server
+       else {
+         // Tampilkan pesan error umum dari server langsung di toast
+         toast.error("Submission Failed", {
+           description: result.message || "An unknown server error occurred.",
+         });
+       }
+       return; // Hentikan eksekusi setelah menangani error
+     }
+
+
+      // Jika berhasil
+      toast.success("Request Sent!", {
         description:
-          "Aplikasi seller Anda sedang diproses. Kami akan memberitahu Anda via email.",
+          "Your seller application is being processed. We will notify you via email.",
       });
       form.reset();
     } catch (error) {
-      toast.error("Gagal Mengirim Aplikasi", {
-        description: error.message,
+      console.error("Network or JSON parsing error:", error);
+      toast.error("Submission Error", {
+        description:
+          "Could not connect to the server. Please check your network connection.",
       });
     } finally {
       setIsLoading(false);

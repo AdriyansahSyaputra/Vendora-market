@@ -6,13 +6,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  FormLabel,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -27,18 +27,6 @@ const productCategories = [
 ];
 
 const StoreInfoSection = ({ form }) => {
-  const handleCategoryChange = (categoryId) => {
-    const currentCategories = form.getValues("categories") || [];
-    const newCategories = currentCategories.includes(categoryId)
-      ? currentCategories.filter((id) => id !== categoryId)
-      : [...currentCategories, categoryId];
-
-    form.setValue("categories", newCategories, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-  };
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -53,16 +41,9 @@ const StoreInfoSection = ({ form }) => {
           name="storeName"
           render={({ field }) => (
             <FormItem>
+              <FormLabel>Store Name</FormLabel>
               <FormControl>
-                <div className="space-y-2">
-                  <Label htmlFor="storeName">Store Name</Label>
-                  <Input
-                    id="storeName"
-                    placeholder="e.g., Awesome Gadget Store"
-                    {...field}
-                    required
-                  />
-                </div>
+                <Input placeholder="e.g., Awesome Gadget Store" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -74,17 +55,13 @@ const StoreInfoSection = ({ form }) => {
           name="storeDescription"
           render={({ field }) => (
             <FormItem>
+              <FormLabel>Store Description</FormLabel>
               <FormControl>
-                <div className="space-y-2">
-                  <Label htmlFor="storeDescription">Store Description</Label>
-                  <Textarea
-                    id="storeDescription"
-                    placeholder="Briefly describe your store, the products you sell, and your unique selling points."
-                    {...field}
-                    className="min-h-[120px]"
-                    required
-                  />
-                </div>
+                <Textarea
+                  placeholder="Briefly describe your store, the products you sell, and your unique selling points."
+                  {...field}
+                  className="min-h-[120px]"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,33 +73,34 @@ const StoreInfoSection = ({ form }) => {
           name="categories"
           render={({ field }) => (
             <FormItem>
-              <FormControl>
-                <div className="space-y-4">
-                  <Label>Product Categories</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {productCategories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={category.id}
-                          checked={(field.value || []).includes(category.id)}
-                          onCheckedChange={() =>
-                            handleCategoryChange(category.id)
-                          }
-                        />
-                        <label
-                          htmlFor={category.id}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {category.label}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </FormControl>
+              <FormLabel>Product Categories</FormLabel>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
+                {productCategories.map((category) => (
+                  <FormItem
+                    key={category.id}
+                    className="flex flex-row items-start space-x-3 space-y-0"
+                  >
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value?.includes(category.id)}
+                        onCheckedChange={(checked) => {
+                          const currentValues = field.value || [];
+                          return checked
+                            ? field.onChange([...currentValues, category.id])
+                            : field.onChange(
+                                currentValues.filter(
+                                  (value) => value !== category.id
+                                )
+                              );
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal">
+                      {category.label}
+                    </FormLabel>
+                  </FormItem>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}

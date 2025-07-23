@@ -10,10 +10,12 @@ import cloudinary from "../config/cloudinaryConfig.js";
  */
 const uploadToCloudinary = async (fileString, folder) => {
   try {
+    console.log("🚀 Upload dimulai...");
     const { secure_url } = await cloudinary.uploader.upload(fileString, {
       folder: folder,
       resource_type: "auto",
     });
+    console.log("✅ Upload berhasil:", result.secure_url);
     return secure_url;
   } catch (error) {
     console.error("Error uploading to Cloudinary:", error);
@@ -36,10 +38,9 @@ export const applySellerApplication = async (req, res) => {
       status: { $in: ["pending", "approved"] },
     });
     if (existingApplication) {
-      res.status(400);
-      throw new Error(
-        `You have an existing application with status "${existingApplication.status}".`
-      );
+      return res.status(400).json({
+        message: `You have an existing application with status "${existingApplication.status}".`,
+      });
     }
 
     //   Ambil data dari request body
@@ -62,8 +63,9 @@ export const applySellerApplication = async (req, res) => {
 
     if (location === "ID") {
       if (!docBase64.ktp || !docBase64.npwp) {
-        res.status(400);
-        throw new Error("Untuk lokasi Indonesia, KTP dan NPWP wajib diunggah.");
+        return res.status(400).json({
+          message: "For Indonesia location, KTP and NPWP files are required.",
+        });
       }
       // Unggah setiap file dan simpan URL-nya
       uploadedDocuments.ktp = await uploadToCloudinary(
@@ -76,10 +78,10 @@ export const applySellerApplication = async (req, res) => {
       );
     } else {
       if (!docBase64.passport || !docBase64.businessLicense) {
-        res.status(400);
-        throw new Error(
-          "Untuk lokasi internasional, Paspor dan Izin Usaha wajib diunggah."
-        );
+        return res.status(400).json({
+          message:
+            "For international locations, Passport and Business License are required.",
+        });
       }
       uploadedDocuments.passport = await uploadToCloudinary(
         docBase64.passport,
@@ -106,18 +108,28 @@ export const applySellerApplication = async (req, res) => {
       status: "pending",
     });
 
-    if (newApplication) {
-      await newApplication.save();
-      res.status(201).json({
-        message: "Seller application created successfully.",
-        application: newApplication,
-      });
-    } else {
-      res.status(400);
-      throw new Error("Failed to create seller application.");
-    }
+    console.log("📝 Menyimpan SellerApplication dengan data:", {
+      userId,
+      fullName,
+      email,
+      phone,
+      storeName,
+      location,
+      uploadedDocuments,
+    });
+
+
+    await newApplication.save();
+
+    res.status(201).json({
+      message: "Seller application created successfully.",
+      application: newApplication,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
-    return;
+     console.error("🔥 Server Error:", error.message);
+     console.error("📦 Stack Trace:", error.stack);
+    res.status(500).json({
+      message: "An unexpected server error occurred. Please try again later.",
+    });
   }
 };

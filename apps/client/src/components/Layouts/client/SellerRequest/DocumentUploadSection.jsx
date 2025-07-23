@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, X } from "lucide-react";
 
@@ -163,7 +162,7 @@ const DocumentUploadSection = ({ form, onFileChange }) => {
             />
             <FileInput
               name="documents.businessLicense"
-              label="Izin Usaha"
+              label="Business License"
               required
               form={form}
               onFileChange={onFileChange}

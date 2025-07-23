@@ -13,14 +13,14 @@ const AgreementSection = ({ isLoading, form }) => {
     <div className="w-full space-y-6">
       <FormField
         control={form.control}
-        name="agreement"
+        name="terms"
         render={({ field }) => (
           <FormItem>
             <FormControl>
               <div className="flex items-start space-x-3 p-4 border rounded-lg bg-background">
                 <Checkbox
                   id="terms"
-                  checked={field.value}
+                  checked={field.value ?? false}
                   onCheckedChange={field.onChange}
                 />
                 <div className="grid gap-1.5 leading-none">
@@ -51,7 +51,7 @@ const AgreementSection = ({ isLoading, form }) => {
         type="submit"
         className="w-full md:w-auto"
         size="lg"
-        disabled={!form.watch("agreement") || isLoading}
+        disabled={!form.watch("terms") || isLoading}
       >
         {isLoading ? "Submitting..." : "Submit Seller Application"}
       </Button>
