@@ -15,7 +15,7 @@ const uploadToCloudinary = async (fileString, folder) => {
       folder: folder,
       resource_type: "auto",
     });
-    console.log("✅ Upload berhasil:", result.secure_url);
+    console.log("✅ Upload berhasil:", secure_url);
     return secure_url;
   } catch (error) {
     console.error("Error uploading to Cloudinary:", error);
@@ -30,7 +30,7 @@ const uploadToCloudinary = async (fileString, folder) => {
  */
 export const applySellerApplication = async (req, res) => {
   const userId = req.user._id;
-
+  console.log("Data masuk:", req.body);
   try {
     // Cek duplikasi request seller
     const existingApplication = await SellerApplication.findOne({
@@ -62,12 +62,6 @@ export const applySellerApplication = async (req, res) => {
     const uploadFolder = "seller-applications";
 
     if (location === "ID") {
-      if (!docBase64.ktp || !docBase64.npwp) {
-        return res.status(400).json({
-          message: "For Indonesia location, KTP and NPWP files are required.",
-        });
-      }
-      // Unggah setiap file dan simpan URL-nya
       uploadedDocuments.ktp = await uploadToCloudinary(
         docBase64.ktp,
         uploadFolder
@@ -77,12 +71,6 @@ export const applySellerApplication = async (req, res) => {
         uploadFolder
       );
     } else {
-      if (!docBase64.passport || !docBase64.businessLicense) {
-        return res.status(400).json({
-          message:
-            "For international locations, Passport and Business License are required.",
-        });
-      }
       uploadedDocuments.passport = await uploadToCloudinary(
         docBase64.passport,
         uploadFolder
@@ -118,7 +106,6 @@ export const applySellerApplication = async (req, res) => {
       uploadedDocuments,
     });
 
-
     await newApplication.save();
 
     res.status(201).json({
@@ -126,10 +113,12 @@ export const applySellerApplication = async (req, res) => {
       application: newApplication,
     });
   } catch (error) {
-     console.error("🔥 Server Error:", error.message);
-     console.error("📦 Stack Trace:", error.stack);
+    console.error("🔥 Server Error:", error.message);
+    console.error("📦 Stack Trace:", error.stack);
     res.status(500).json({
-      message: "An unexpected server error occurred. Please try again later.",
+      message: "An unexpected error occurred.",
+      error: error.message, // tambahkan ini
+      stack: error.stack, // bisa juga tambahkan sementara
     });
   }
 };

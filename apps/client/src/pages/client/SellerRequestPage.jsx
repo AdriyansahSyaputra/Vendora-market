@@ -15,6 +15,7 @@ import { fileToBase64 } from "@/utils/fileToBase64";
 import { useForm } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import { useAuth } from "@/context/auth/authContext";
+import axios from "axios";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -116,8 +117,6 @@ const SellerRequestPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    // Debug isi form
-    console.log("Form Values:", form.getValues());
     e.preventDefault();
     if (!isSubmittable) {
       toast.error("Form Incomplete", {
@@ -127,84 +126,66 @@ const SellerRequestPage = () => {
     }
 
     setIsLoading(true);
+    // Ambil data apa adanya, tanpa manipulasi
     const formData = form.getValues();
-    const location = formData.location;
-
-    // Debug isi formData
-    console.log("Form Data:", formData);
-
-    // Hapus field dokumen yang tidak diperlukan
-    if (location === "ID") {
-       console.log("📍 Lokasi: Indonesia - Mulai upload KTP dan NPWP");
-      delete formData.documents.passport;
-      delete formData.documents.businessLicense;
-    } else {
-       console.log(
-         "🌐 Lokasi: Internasional - Mulai upload Passport dan Business License"
-       );
-      delete formData.documents.ktp;
-      delete formData.documents.npwp;
-    }
 
     try {
-      const response = await fetch("/api/client/apply", {
-        method: "POST",
+      // Gunakan axios dengan benar
+      const response = await axios.post("/api/client/apply", formData, {
+        withCredentials: true, // Ini penting untuk mengirim cookie otentikasi
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
-       console.log("✅ Server Result:", result);
-       console.log("🌐 Response Status:", response.status);
+      // PERBAIKAN: Akses data dari `response.data`, bukan `response.json()`
+      const result = response.data;
 
-      // --- Penanganan Error dari Backend ---
-     if (!response.ok) {
-       // 1. Cek dulu apakah ini error validasi Zod (ada 'details')
-       if (result.details && Array.isArray(result.details)) {
-         toast.error("Submission Failed", {
-           description: "Please correct the errors highlighted below.",
-         });
-
-         // Loop dan atur error per field
-         result.details.forEach((err) => {
-           const fieldName = err.path.join(".");
-           // Untuk Zod di backend yang memvalidasi `body`, pathnya mungkin ['body', 'phone']
-           // jadi kita perlu menghapus 'body' jika ada.
-           const finalFieldName = fieldName.startsWith("body.")
-             ? fieldName.substring(5)
-             : fieldName;
-
-           form.setError(finalFieldName, {
-             type: "server",
-             message: err.message,
-           });
-         });
-       }
-       // 2. Jika bukan error Zod, berarti ini adalah error umum dari server
-       else {
-         // Tampilkan pesan error umum dari server langsung di toast
-         toast.error("Submission Failed", {
-           description: result.message || "An unknown server error occurred.",
-         });
-       }
-       return; // Hentikan eksekusi setelah menangani error
-     }
-
-
-      // Jika berhasil
+      // Jika berhasil (axios akan error untuk status non-2xx, jadi kita tidak perlu `!response.ok`)
       toast.success("Request Sent!", {
         description:
           "Your seller application is being processed. We will notify you via email.",
       });
       form.reset();
     } catch (error) {
-      console.error("Network or JSON parsing error:", error);
-      toast.error("Submission Error", {
-        description:
-          "Could not connect to the server. Please check your network connection.",
-      });
+      // axios menempatkan response error di dalam `error.response`
+      const errorResponse = error.response?.data;
+      console.error("🔥 Server Error Response:", errorResponse);
+
+      if (
+        errorResponse &&
+        errorResponse.details &&
+        Array.isArray(errorResponse.details)
+      ) {
+        // Kasus 1: Error validasi dari Zod
+        toast.error("Submission Failed", {
+          description: "Please correct the errors highlighted below.",
+        });
+
+        errorResponse.details.forEach((err) => {
+          const fieldName = err.path.join(".");
+          // Hapus 'body.' dari path jika ada, agar cocok dengan nama field di form
+          const finalFieldName = fieldName.startsWith("body.")
+            ? fieldName.substring(5)
+            : fieldName;
+
+          form.setError(finalFieldName, {
+            type: "server",
+            message: err.message,
+          });
+        });
+      } else if (errorResponse && errorResponse.message) {
+        // Kasus 2: Error umum dari server (misal: "Aplikasi sudah ada")
+        toast.error("Submission Failed", {
+          description: errorResponse.message,
+        });
+      } else {
+        // Kasus 3: Error jaringan atau error tak terduga lainnya
+        toast.error("Submission Error", {
+          description:
+            "Could not connect to the server. Please check your network connection.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

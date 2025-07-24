@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import User from "../models/userModel.js";
 dotenv.config();
 
 /**
@@ -7,7 +8,7 @@ dotenv.config();
  * Memverifikasi token dari cookie atau header 'Authorization'.
  * Jika valid, melampirkan payload token ke `req.user`.
  */
-export const authenticateUser = (req, res, next) => {
+export const authenticateUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader =
     authHeader && authHeader.startsWith("Bearer ")
@@ -25,7 +26,14 @@ export const authenticateUser = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Payload dari token (id, role, dll)
+    req.user = await User.findById(decoded.id).select("-password -__v");
+
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "Not authorized, user for this token not found." });
+    }
+
     next();
   } catch (error) {
     return res
