@@ -117,8 +117,8 @@ export const applySellerApplication = async (req, res) => {
     console.error("📦 Stack Trace:", error.stack);
     res.status(500).json({
       message: "An unexpected error occurred.",
-      error: error.message, // tambahkan ini
-      stack: error.stack, // bisa juga tambahkan sementara
+      error: error.message, 
+      stack: error.stack, 
     });
   }
 };

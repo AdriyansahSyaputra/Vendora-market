@@ -126,29 +126,26 @@ const SellerRequestPage = () => {
     }
 
     setIsLoading(true);
-    // Ambil data apa adanya, tanpa manipulasi
+
     const formData = form.getValues();
 
     try {
       // Gunakan axios dengan benar
       const response = await axios.post("/api/client/apply", formData, {
-        withCredentials: true, // Ini penting untuk mengirim cookie otentikasi
+        withCredentials: true,
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      // PERBAIKAN: Akses data dari `response.data`, bukan `response.json()`
       const result = response.data;
 
-      // Jika berhasil (axios akan error untuk status non-2xx, jadi kita tidak perlu `!response.ok`)
       toast.success("Request Sent!", {
         description:
           "Your seller application is being processed. We will notify you via email.",
       });
       form.reset();
     } catch (error) {
-      // axios menempatkan response error di dalam `error.response`
       const errorResponse = error.response?.data;
       console.error("🔥 Server Error Response:", errorResponse);
 
@@ -157,14 +154,12 @@ const SellerRequestPage = () => {
         errorResponse.details &&
         Array.isArray(errorResponse.details)
       ) {
-        // Kasus 1: Error validasi dari Zod
         toast.error("Submission Failed", {
           description: "Please correct the errors highlighted below.",
         });
 
         errorResponse.details.forEach((err) => {
           const fieldName = err.path.join(".");
-          // Hapus 'body.' dari path jika ada, agar cocok dengan nama field di form
           const finalFieldName = fieldName.startsWith("body.")
             ? fieldName.substring(5)
             : fieldName;
@@ -175,12 +170,10 @@ const SellerRequestPage = () => {
           });
         });
       } else if (errorResponse && errorResponse.message) {
-        // Kasus 2: Error umum dari server (misal: "Aplikasi sudah ada")
         toast.error("Submission Failed", {
           description: errorResponse.message,
         });
       } else {
-        // Kasus 3: Error jaringan atau error tak terduga lainnya
         toast.error("Submission Error", {
           description:
             "Could not connect to the server. Please check your network connection.",
