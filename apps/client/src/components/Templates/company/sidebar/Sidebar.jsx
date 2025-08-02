@@ -1,23 +1,15 @@
 import Navlink from "./Navlink";
 import SubNavlink from "./SubNavlink";
 import CollapsibleNavLink from "../../vendor/sidebar/CollabsibleNavLink";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   User,
   Package,
-  ShoppingCart,
   Store,
-  CircleAlert,
-  Bell,
   Settings,
-  ChartNoAxesCombined,
   Store as StoreIcon,
-  MessageCircle,
   BarChart,
-  Star,
   Receipt,
-  Wallet,
   Ticket,
   HelpCircle,
   Truck,
@@ -65,7 +57,7 @@ export const SidebarMenuContent = ({ isCollapsed }) => {
           basePath="/dashboard/users"
         >
           <SubNavlink to="/dashboard/users">All Users</SubNavlink>
-          <SubNavlink to="/dashboard/users/active">
+          <SubNavlink to="/dashboard/users/verification">
             Seller Verification
           </SubNavlink>
         </CollapsibleNavLink>

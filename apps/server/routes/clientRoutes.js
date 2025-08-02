@@ -1,5 +1,8 @@
 import express from "express";
-import { applySellerApplication } from "../controllers/sellerApplicationController.js";
+import {
+  applySellerApplication,
+  getMyApplication,
+} from "../controllers/sellerApplicationController.js";
 import { sellerApplicationSchema } from "../validators/sellerApplicationsValidator.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
@@ -12,5 +15,7 @@ router.post(
   validate(sellerApplicationSchema),
   applySellerApplication
 );
+
+router.get("/my-application", authenticateUser, getMyApplication);
 
 export default router;

@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
+import companyRoutes from "./routes/companyRoutes.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/client", clientRoutes);
+app.use("/api/company", companyRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

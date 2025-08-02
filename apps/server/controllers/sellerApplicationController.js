@@ -117,8 +117,119 @@ export const applySellerApplication = async (req, res) => {
     console.error("📦 Stack Trace:", error.stack);
     res.status(500).json({
       message: "An unexpected error occurred.",
-      error: error.message, 
-      stack: error.stack, 
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+};
+
+/**
+ * @desc Admin memperbarui status aplikasi seller (Approved/Rejected)
+ * @route PUT /api/seller-applications/:id/status
+ * @access Private/Admin
+ */
+export const updateApplicationStatus = async (req, res) => {
+  const { status, rejectionReason } = req.body;
+  const applicationId = req.params.id;
+
+  try {
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status. Must be 'approved' or 'rejected'.",
+      });
+    }
+
+    if (
+      status === "rejected" &&
+      (!rejectionReason || rejectionReason.trim() === "")
+    ) {
+      return res.status(400).json({
+        message: "Rejection reason is required when status is 'rejected'.",
+      });
+    }
+
+    const application = await SellerApplication.findById(applicationId);
+
+    if (!application) {
+      return res.status(404).json({
+        message: "Application not found.",
+      });
+    }
+
+    if (application.status !== "pending") {
+      return res.status(400).json({
+        message: `Application is already ${application.status}.`,
+      });
+    }
+
+    application.status = status;
+    if (status === "rejected") {
+      application.rejectionReason = rejectionReason;
+    } else {
+      application.rejectionReason = undefined;
+    }
+
+    if (status === "approved") {
+      const user = await User.findById(application.userId, { role: "seller" });
+    }
+
+    const updatedApplication = await application.save();
+
+    res.status(200).json({
+      message: `Application status updated to ${status}.`,
+      application: updatedApplication,
+    });
+  } catch (error) {
+    console.error("🔥 Server Error:", error.message);
+  }
+};
+
+/**
+ * @desc Admin mendapatkan seluruh daftar aplikasi seller (bisa difilter by status)
+ * @route GET /api/seller-applications
+ * @access Private/Admin
+ */
+export const getAllSellerApplications = async (req, res) => {
+  try {
+    const filter = req.query.status ? { status: req.query.status } : {};
+    const applications = await SellerApplication.find(filter)
+      .populate("userId", "fullName email phone status")
+      .sort({ createdAt: -1 });
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error("🔥 Server Error:", error.message);
+    res.status(500).json({
+      message: "An unexpected error occurred.",
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+};
+
+/**
+ * @desc User mendapatkan detail aplikasi seller mereka
+ * @route GET /api/seller-applications/my-application
+ * @access Private/User
+ */
+export const getMyApplication = async (req, res) => {
+  try {
+    const application = await SellerApplication.findOne({
+      userId: req.user._id,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        message: "No application found for this user.",
+      });
+    }
+
+    res.status(200).json(application);
+  } catch (error) {
+    console.error("🔥 Server Error:", error.message);
+    res.status(500).json({
+      message: "An unexpected error occurred.",
+      error: error.message,
+      stack: error.stack,
     });
   }
 };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Sidebar from "@/components/Templates/company/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
 import { Helmet } from "react-helmet-async";
@@ -14,84 +14,20 @@ import SellerVerificationModal from "@/components/Layouts/company/User/Seller-ve
 import SellerTable from "@/components/Layouts/company/User/Seller-verification/SellerTable";
 import { Input } from "@/components/ui/input";
 import PaginationTable from "@/components/Elements/Pagination";
-
-const sellerVerificationData = [
-  {
-    id: "REQ-001",
-    name: "Emily White",
-    email: "emily.white@example.com",
-    phone: "555-0201",
-    requestDate: "2024-07-15",
-    storeName: "Emily's Handmade Goods",
-    description: "Unique handmade crafts and jewelry.",
-    storeAddress: "111 Craft St, Austin, TX",
-    npwpUrl: "#",
-    ktpUrl: "#",
-    bankAccount: "Bank of America - **** 1234",
-  },
-  {
-    id: "REQ-002",
-    name: "Ben Carter",
-    email: "ben.carter@example.com",
-    phone: "555-0202",
-    requestDate: "2024-07-14",
-    storeName: "Ben's Vintage Finds",
-    description: "Curated vintage clothing and accessories.",
-    storeAddress: "222 Retro Ave, Portland, OR",
-    npwpUrl: "#",
-    ktpUrl: "#",
-    bankAccount: "Chase - **** 5678",
-  },
-  {
-    id: "REQ-003",
-    name: "Chloe Davis",
-    email: "chloe.davis@example.com",
-    phone: "555-0203",
-    requestDate: "2024-07-12",
-    storeName: "The Gadget Hub",
-    description: "Latest tech and electronic gadgets.",
-    storeAddress: "333 Tech Park, San Francisco, CA",
-    npwpUrl: "#",
-    ktpUrl: "#",
-    bankAccount: "Wells Fargo - **** 9012",
-  },
-  {
-    id: "REQ-004",
-    name: "Daniel Evans",
-    email: "daniel.evans@example.com",
-    phone: "555-0204",
-    requestDate: "2024-06-28",
-    storeName: "Gourmet Pantry",
-    description: "Artisanal foods and ingredients.",
-    storeAddress: "444 Foodie Blvd, Chicago, IL",
-    npwpUrl: "#",
-    ktpUrl: "#",
-    bankAccount: "Citibank - **** 3456",
-  },
-  {
-    id: "REQ-005",
-    name: "Olivia Martinez",
-    email: "olivia.m@example.com",
-    phone: "555-0205",
-    requestDate: "2024-06-25",
-    storeName: "Green Thumb Botanics",
-    description: "Rare and exotic house plants.",
-    storeAddress: "555 Garden Way, Miami, FL",
-    npwpUrl: "#",
-    ktpUrl: "#",
-    bankAccount: "Bank of America - **** 7890",
-  },
-];
+import axios from "axios";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 const SellerVerification = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [requests, setRequests] = useState(sellerVerificationData);
+  const [requests, setRequests] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isDetailModalOpen, setDetailModalOpen] = useState(false);
   const [isConfirmOpen, setConfirmOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [confirmAction, setConfirmAction] = useState({
     action: null,
     id: null,
@@ -99,15 +35,56 @@ const SellerVerification = () => {
 
   const ITEMS_PER_PAGE = 10;
 
+  useEffect(() => {
+    sellerVerificationData();
+  }, []);
+
+  const sellerVerificationData = async () => {
+    try {
+      const response = await axios.get("/api/company/seller-applications", {
+        withCredentials: true,
+      });
+      setRequests(response.data);
+      console.log("Data fetched successfully:", response.data);
+    } catch (error) {
+      console.error("Error fetching seller verification data:", error);
+      setRequests([]);
+    }
+  };
+
   const filteredRequests = useMemo(() => {
     return requests
+      .filter((req) => {
+        const fullName = req.fullName?.toLowerCase() || "";
+        const email = req.email?.toLowerCase() || "";
+        const phone = req.phone || "";
+        const status = req.status?.toLowerCase() || "";
+        const storeName = req.storeName?.toLowerCase() || "";
+
+        const query = searchQuery.toLowerCase();
+
+        return (
+          fullName.includes(query) ||
+          email.includes(query) ||
+          phone.includes(query) ||
+          status.includes(query) ||
+          storeName.includes(query)
+        );
+      })
       .filter(
         (req) =>
-          req.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          req.email.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .filter((req) => !dateFilter || req.requestDate === dateFilter);
+          !dateFilter ||
+          new Date(req.createdAt).toISOString().split("T")[0] === dateFilter
+      );
   }, [requests, searchQuery, dateFilter]);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   const paginatedRequests = filteredRequests.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -122,24 +99,59 @@ const SellerVerification = () => {
 
   const handleAction = (action, id) => {
     setConfirmAction({ action, id });
+    setRejectionReason("");
     setConfirmOpen(true);
     setDetailModalOpen(false);
   };
 
-  const handleConfirm = () => {
-    console.log(
-      `${
-        confirmAction.action === "accept" ? "Accepting" : "Rejecting"
-      } request ${confirmAction.id}`
-    );
-    setRequests(requests.filter((req) => req.id !== confirmAction.id));
-    setConfirmOpen(false);
-    setConfirmAction({ action: null, id: null });
+  const handleConfirmAction = async () => {
+    const { action, id } = confirmAction;
+    const status = action === "approve" ? "approved" : "rejected";
+
+    // Validasi alasan penolakan
+    if (status === "rejected" && rejectionReason.trim() === "") {
+      toast.error("Rejection reason cannot be empty.");
+      return;
+    }
+
+    try {
+      const payload = { status };
+      if (status === "rejected") {
+        payload.rejectionReason = rejectionReason;
+      }
+
+      // Kirim request ke backend
+      const response = await axios.put(
+        `/api/company/seller-applications/${id}/status`,
+        payload,
+        { withCredentials: true }
+      );
+
+      toast.success(response.data.message);
+
+      // Perbarui state secara lokal untuk UX yang lebih baik (tanpa reload)
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req._id === id ? { ...req, status: status } : req
+        )
+      );
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "An error occurred.";
+      toast.error("Action Failed", { description: errorMessage });
+    } finally {
+      // Reset state setelah selesai
+      setConfirmOpen(false);
+      setConfirmAction({ action: null, id: null });
+      setRejectionReason("");
+    }
   };
 
   return (
     <>
       <Helmet title="Seller Verification" />
+
+      <Toaster richColors position="top-center" />
 
       <div className="flex min-h-screen max-w-full bg-muted/40">
         {/* Sidebar Desktop */}
@@ -186,6 +198,7 @@ const SellerVerification = () => {
                   <SellerTable
                     sellers={paginatedRequests}
                     handleOpenDetailModal={handleOpenDetailModal}
+                    formatDate={formatDate}
                   />
                   <PaginationTable
                     currentPage={currentPage}
@@ -205,11 +218,14 @@ const SellerVerification = () => {
             <ConfirmationDialog
               open={isConfirmOpen}
               onOpenChange={setConfirmOpen}
-              onConfirm={handleConfirm}
+              onConfirm={handleConfirmAction}
               title={`Confirm ${
                 confirmAction.action === "accept" ? "Acceptance" : "Rejection"
               }`}
               description={`Are you sure you want to ${confirmAction.action} this seller verification request? This action cannot be undone.`}
+              action={confirmAction.action}
+              reason={rejectionReason}
+              onReasonChange={setRejectionReason}
             />
           </main>
         </div>
