@@ -129,7 +129,6 @@ const SellerVerification = () => {
 
       toast.success(response.data.message);
 
-      // Perbarui state secara lokal untuk UX yang lebih baik (tanpa reload)
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
           req._id === id ? { ...req, status: status } : req

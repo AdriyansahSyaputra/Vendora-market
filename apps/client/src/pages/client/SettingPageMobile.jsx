@@ -34,6 +34,7 @@ import InformationView from "@/components/Layouts/client/SettingMobile/views/Inf
 import ChatView from "@/components/Layouts/client/SettingMobile/views/ChatView";
 import ProfileView from "@/components/Layouts/client/SettingMobile/views/ProfileView";
 import PoliciesView from "@/components/Layouts/client/SettingMobile/views/PoliciesView";
+import { useNavigate } from "react-router-dom";
 
 // Komponen untuk menu utama
 const MainSettingsMenu = ({ onNavigate }) => (
@@ -136,7 +137,8 @@ const MainSettingsMenu = ({ onNavigate }) => (
 );
 
 const SettingPageMobile = () => {
-  const [view, setView] = useState("main"); // 'main', 'profile', 'address', etc.
+  const [view, setView] = useState("main");
+  const navigate = useNavigate();
 
   const viewTitles = {
     main: "Settings",
@@ -199,9 +201,16 @@ const SettingPageMobile = () => {
         {/* Header Dinamis */}
         <header className="sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b dark:border-slate-800">
           <div className="flex items-center h-16 px-2">
-            {view !== "main" && (
+            {view !== "main" ? (
               <button
                 onClick={() => setView("main")}
+                className="p-2 rounded-full hover:bg-accent dark:hover:bg-slate-800"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate(-1)}
                 className="p-2 rounded-full hover:bg-accent dark:hover:bg-slate-800"
               >
                 <ChevronLeft className="w-6 h-6" />
