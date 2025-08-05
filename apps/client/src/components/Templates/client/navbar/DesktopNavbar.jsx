@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import HoverPreviewCard from "./HoverPreviewCard";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/auth/authContext";
+import NotificationListDesktop from "@/components/Layouts/client/Notification/NotificationListDesktop";
 
 const navLinks = [
   {
@@ -91,7 +92,7 @@ const DesktopNavbar = () => {
               }
               title="Notifikasi"
             >
-              <p>Belum ada notifikasi baru untuk Anda.</p>
+              <NotificationListDesktop />
             </HoverPreviewCard>
 
             <HoverPreviewCard

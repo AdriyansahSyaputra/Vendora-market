@@ -36,6 +36,7 @@ import VoucherPage from "./pages/company/Advertisement/VoucherPage";
 import LogActivityPage from "./pages/company/LogActivityPage";
 import AuthPage from "./pages/auth/AuthPage";
 import SellerRequestPage from "./pages/client/SellerRequestPage";
+import NotificationDetailPageDesktop from "./pages/client/NotificationDetailPageDesktop";
 
 const App = () => {
   return (
@@ -51,6 +52,10 @@ const App = () => {
         <Route path="/settings" element={<SettingPageMobile />} />
         <Route path="/settings/desktop" element={<SettingPageDesktop />} />
         <Route path="/seller-request" element={<SellerRequestPage />} />
+        <Route
+          path="/notifications/:slug"
+          element={<NotificationDetailPageDesktop />}
+        />
 
         {/* Seller routes */}
         <Route path="/store/dashboard" element={<DashboardPage />} />
@@ -91,22 +96,33 @@ const App = () => {
         {/* Company Routes */}
         <Route path="/dashboard" element={<CompanyDashboardPage />} />
         <Route path="/dashboard/users" element={<AllUsersPage />} />
-        <Route path="/dashboard/users/verification" element={<SellerVerification />} />
+        <Route
+          path="/dashboard/users/verification"
+          element={<SellerVerification />}
+        />
 
         <Route path="/dashboard/products" element={<AllProductPageCompany />} />
-        <Route path="/dashboard/products/categories" element={<CategoryManagementPage />} />
+        <Route
+          path="/dashboard/products/categories"
+          element={<CategoryManagementPage />}
+        />
 
         <Route path="/dashboard/orders" element={<OrderManagementPage />} />
 
         <Route path="/dashboard/stores" element={<StoreManagementPage />} />
 
-        <Route path="/dashboard/advertisements" element={<AdvertisementPage />} />
-        <Route path="/dashboard/advertisements/vouchers" element={<VoucherPage />} />
+        <Route
+          path="/dashboard/advertisements"
+          element={<AdvertisementPage />}
+        />
+        <Route
+          path="/dashboard/advertisements/vouchers"
+          element={<VoucherPage />}
+        />
 
         <Route path="/dashboard/log-activity" element={<LogActivityPage />} />
 
-        <Route path="/auth" element={<AuthPage/>} />
-
+        <Route path="/auth" element={<AuthPage />} />
       </Routes>
     </Router>
   );

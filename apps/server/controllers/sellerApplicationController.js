@@ -1,6 +1,9 @@
 import SellerApplication from "../models/sellerApplicationsModel.js";
 import User from "../models/userModel.js";
 import cloudinary from "../config/cloudinaryConfig.js";
+import Store from "../models/storeModel.js";
+import { sendNotificationToUser } from "../config/socket.js";
+import { sendStatusUpdateEmail } from "../services/emailService.js";
 
 /**
  * Fungsi helper untuk mengunggah satu file Base64 ke Cloudinary
@@ -43,7 +46,7 @@ export const applySellerApplication = async (req, res) => {
       });
     }
 
-    //   Ambil data dari request body
+    // Ambil data dari request body
     const {
       phone,
       storeName,
@@ -170,10 +173,52 @@ export const updateApplicationStatus = async (req, res) => {
     }
 
     if (status === "approved") {
-      const user = await User.findById(application.userId, { role: "seller" });
+      await User.findByIdAndUpdate(application.userId, { role: "seller" });
+
+      const store = new Store({
+        ownerId: application.userId,
+        name: application.storeName,
+        description: application.storeDescription,
+        categories: application.categories,
+        location: application.location,
+        address: application.address,
+      });
+
+      await store.save();
     }
 
     const updatedApplication = await application.save();
+
+    const userToNotify = application.userId;
+    const io = req.app.get("socketio"); // Ambil instance io dari Express app
+
+    if (status === "approved") {
+      // 1. Kirim notifikasi real-time
+      sendNotificationToUser(io, userToNotify._id.toString(), {
+        title: "Congratulations! Your seller application has been approved.",
+        message: `You can now start selling at ${application.storeName}.`,
+      });
+
+      // 2. Kirim email
+      await sendStatusUpdateEmail(
+        userToNotify.email,
+        "Your Seller Application is Approved!",
+        `<h1>Congratulations!</h1><p>Your application to open the store "${application.storeName}" has been approved. You can now log in and start managing your products.</p>`
+      );
+    } else if (status === "rejected") {
+      // 1. Kirim notifikasi real-time
+      sendNotificationToUser(io, userToNotify._id.toString(), {
+        title: "Update on your seller application.",
+        message: `Unfortunately, your application was rejected. Reason: ${rejectionReason}`,
+      });
+
+      // 2. Kirim email
+      await sendStatusUpdateEmail(
+        userToNotify.email,
+        "Update on Your Seller Application",
+        `<h1>Application Update</h1><p>We regret to inform you that your application for the store "${application.storeName}" has been rejected.</p><p><b>Reason:</b> ${rejectionReason}</p>`
+      );
+    }
 
     res.status(200).json({
       message: `Application status updated to ${status}.`,

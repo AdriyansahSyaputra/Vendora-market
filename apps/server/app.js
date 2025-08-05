@@ -4,8 +4,10 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
+import { initializeSocket } from "./config/socket.js";
 
 const app = express();
+const io = initializeSocket(app);
 
 app.use(
   cors({
@@ -19,6 +21,8 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
+
+app.set("socketio", io);
 
 // Middleware untuk logging semua request (untuk debugging)
 // app.use((req, res, next) => {
