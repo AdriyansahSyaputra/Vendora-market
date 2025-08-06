@@ -5,13 +5,16 @@ import App from "./App.jsx";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./context/theme/provider";
 import { AuthProvider } from "./context/auth/authProvider.jsx";
+import { SocketProvider } from "./context/socket/socketProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ThemeProvider>
       <HelmetProvider>
         <AuthProvider>
-          <App />
+          <SocketProvider>
+            <App />
+          </SocketProvider>
         </AuthProvider>
       </HelmetProvider>
     </ThemeProvider>

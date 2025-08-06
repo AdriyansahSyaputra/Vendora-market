@@ -1,37 +1,59 @@
 import { Link } from "react-router-dom";
-import { Tag, ShoppingCart, Store, Info } from "lucide-react";
+import { Bell } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { notificationsData } from "@/utils/notifications";
-import { slugify } from "@/utils/notifications";
-
-const iconMap = {
-  promo: <Tag className="h-5 w-5 text-sky-500" />,
-  order: <ShoppingCart className="h-5 w-5 text-green-500" />,
-  store: <Store className="h-5 w-5 text-purple-500" />,
-  info: <Info className="h-5 w-5 text-gray-500" />,
-};
+import { useNotifications } from "@/hooks/useNotifications";
+import { iconMap } from "@/utils/iconMap";
+import { timeAgo } from "@/utils/dateHelpers";
 
 const NotificationList = () => {
+  const { notificationsData, unreadCount, loading, handleMarkAllAsRead } =
+    useNotifications();
+
+  if (loading) {
+    return <p className="p-4 text-sm text-center">Loading notifications...</p>;
+  }
+
   if (notificationsData.length === 0) {
-    return <p>Belum ada notifikasi baru untuk Anda.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center p-4">
+        <Bell className="h-8 w-8 text-gray-400 mb-2" />
+        <p className="text-sm text-gray-500">
+          You don&apos;t have any notifications
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col">
+      {unreadCount > 0 && (
+        <div className="flex items-center justify-between p-3 border-b">
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {unreadCount} unread notifications
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMarkAllAsRead}
+            className="text-xs"
+          >
+            Mark all as read
+          </Button>
+        </div>
+      )}
+
       <ScrollArea className="h-[300px] -mr-2 pr-2">
         {" "}
         {/* Beri ruang untuk scrollbar */}
         <div className="space-y-2">
           {notificationsData.map((notification) => {
-            const slug = slugify(notification.title);
-
             return (
               <Link
-                to={`/notifications/${slug}`}
-                key={notification.id}
+                to={`/notifications/${notification._id}`}
+                key={notification._id}
                 className="block outline-none"
               >
                 <div
@@ -41,7 +63,7 @@ const NotificationList = () => {
                   )}
                 >
                   <div className="flex-shrink-0 mt-1">
-                    {iconMap[notification.type]}
+                    {iconMap[notification.type] || iconMap.default}
                   </div>
                   <div className="flex-grow">
                     <p className="font-semibold text-sm leading-tight text-gray-800 dark:text-gray-100">
@@ -51,7 +73,7 @@ const NotificationList = () => {
                       {notification.description}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      {notification.timestamp}
+                      {timeAgo(notification.createdAt)}
                     </p>
                   </div>
                   {!notification.isRead && (

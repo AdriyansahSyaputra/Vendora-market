@@ -1,9 +1,11 @@
 const slugify = (text) =>
   text
+    .toString()
     .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "") // Hilangkan karakter selain huruf/angka/spasi
-    .replace(/\s+/g, "-") // Spasi jadi -
-    .replace(/-+/g, "-");
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 
 export default slugify;

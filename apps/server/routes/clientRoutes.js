@@ -6,6 +6,11 @@ import {
 import { sellerApplicationSchema } from "../validators/sellerApplicationsValidator.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
+import {
+  getUserNotifications,
+  markNotificationsAsRead,
+  getNotificationById
+} from "../controllers/notificationController.js";
 
 const router = express.Router();
 
@@ -17,5 +22,11 @@ router.post(
 );
 
 router.get("/my-application", authenticateUser, getMyApplication);
+
+router.get("/notifications", authenticateUser, getUserNotifications);
+
+router.put("/notifications/read", authenticateUser, markNotificationsAsRead);
+
+router.get("/notifications/:id", authenticateUser, getNotificationById);
 
 export default router;

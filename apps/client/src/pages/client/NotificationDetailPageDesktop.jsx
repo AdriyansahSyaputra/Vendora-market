@@ -1,13 +1,6 @@
-import { Link, useParams } from "react-router-dom";
-import {
-  ChevronRight,
-  Bell,
-  ArrowLeft,
-  Tag,
-  ShoppingCart,
-  Store,
-  Info,
-} from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { ChevronRight, Bell, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,52 +10,66 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getNotificationBySlug } from "@/utils/notifications";
-import { notificationsData } from "@/utils/notifications";
 import { cn } from "@/lib/utils";
 import { slugify } from "@/utils/notifications";
 import { Helmet } from "react-helmet-async";
 import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
 import Footer from "@/components/Templates/client/footer/Footer";
-
-const detailIconMap = {
-  promo: <Tag className="h-7 w-7 text-sky-500" />,
-  order: <ShoppingCart className="h-7 w-7 text-green-500" />,
-  store: <Store className="h-7 w-7 text-purple-500" />,
-  info: <Info className="h-7 w-7 text-gray-500" />,
-};
+import { useNotifications } from "@/hooks/useNotifications";
+import { iconMap } from "@/utils/iconMap";
+import { timeAgo } from "@/utils/dateHelpers";
 
 const NotificationDetailPageDesktop = () => {
-  const { slug } = useParams();
-  const notification = getNotificationBySlug(slug);
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  if (!notification) {
+  const {
+    singleNotification: notification,
+    isSingleLoading: loading,
+    singleError: error,
+    fetchNotificationById,
+    notificationsData: recentNotifications,
+  } = useNotifications();
+  console.log(error)
+  
+  useEffect(() => {
+    if (id) {
+      fetchNotificationById(id);
+    }
+  }, [id, fetchNotificationById]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading notification...
+      </div>
+    );
+  }
+
+  if (error || !notification) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <Bell className="mx-auto h-16 w-16 text-gray-400" />
-          <h2 className="mt-4 text-2xl font-bold">
-            Notifikasi Tidak Ditemukan
-          </h2>
+          <h2 className="mt-4 text-2xl font-bold">Notification not found</h2>
           <p className="mt-2 text-muted-foreground">
-            Notifikasi yang Anda cari mungkin telah dihapus atau tidak ada.
+            {error ||
+              "The notification you are looking for may have been deleted or does not exist."}
           </p>
-          <Button asChild className="mt-6">
-            <Link to="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali ke Beranda
-            </Link>
+          <Button onClick={() => navigate("/")} className="mt-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
           </Button>
         </div>
       </div>
     );
   }
 
-  const { type, timestamp, detailContent } = notification;
+  const { detailContent } = notification;
 
   return (
     <>
-      <Helmet title="Notifications" />
+      <Helmet title={notification.title || "Notification"} />
 
       <div className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
         <DesktopNavbar />
@@ -70,11 +77,9 @@ const NotificationDetailPageDesktop = () => {
         <main className="container mx-auto px-4 py-8 pt-24 md:pt-8 pb-24 md:pb-8 space-y-12 md:space-y-16 lg:space-y-20">
           <div className="max-w-7xl px-4 py-8">
             <div className="mb-6">
-              <Button variant="ghost" asChild>
-                <Link to="/">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Kembali ke Beranda
-                </Link>
+              <Button variant="ghost" onClick={() => navigate(-1)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
               </Button>
             </div>
 
@@ -85,14 +90,14 @@ const NotificationDetailPageDesktop = () => {
                   <CardHeader className="bg-muted/30 p-6">
                     <div className="flex items-start gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background">
-                        {detailIconMap[type]}
+                        {iconMap[notification.type] || iconMap.default}
                       </div>
                       <div>
                         <CardTitle className="text-2xl font-bold tracking-tight">
                           {detailContent.header}
                         </CardTitle>
                         <CardDescription className="mt-1 text-sm">
-                          Diterima: {timestamp}
+                          Received: {timeAgo(notification.createdAt)}
                         </CardDescription>
                       </div>
                     </div>
@@ -119,14 +124,13 @@ const NotificationDetailPageDesktop = () => {
                   Notifikasi Terbaru
                 </h3>
                 <div className="space-y-2">
-                  {notificationsData.map((otherNotif) => (
+                  {recentNotifications.map((otherNotif) => (
                     <Link
-                      key={otherNotif.id}
+                      key={otherNotif._id}
                       to={`/notifications/${slugify(otherNotif.title)}`}
                       className={cn(
                         "block rounded-lg border p-4 transition-colors hover:bg-muted/50",
-                        slugify(otherNotif.title) === slug &&
-                          "border-primary bg-muted"
+                        otherNotif._id === id && "border-primary bg-muted"
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -136,7 +140,7 @@ const NotificationDetailPageDesktop = () => {
                         )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {otherNotif.timestamp}
+                        {timeAgo(otherNotif.createdAt)}
                       </p>
                     </Link>
                   ))}

@@ -92,7 +92,7 @@ const DesktopNavbar = () => {
               }
               title="Notifikasi"
             >
-              <NotificationListDesktop />
+              {user && <NotificationListDesktop />}
             </HoverPreviewCard>
 
             <HoverPreviewCard
