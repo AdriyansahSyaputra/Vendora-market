@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { ChevronRight, Bell, ArrowLeft } from "lucide-react";
+import { ChevronRight, Bell, ArrowLeft, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { slugify } from "@/utils/notifications";
 import { Helmet } from "react-helmet-async";
 import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
 import Footer from "@/components/Templates/client/footer/Footer";
@@ -30,8 +29,7 @@ const NotificationDetailPageDesktop = () => {
     fetchNotificationById,
     notificationsData: recentNotifications,
   } = useNotifications();
-  console.log(error)
-  
+
   useEffect(() => {
     if (id) {
       fetchNotificationById(id);
@@ -41,7 +39,7 @@ const NotificationDetailPageDesktop = () => {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        Loading notification...
+        <LoaderCircle className="animate-spin" /> Loading notification...
       </div>
     );
   }
@@ -127,7 +125,7 @@ const NotificationDetailPageDesktop = () => {
                   {recentNotifications.map((otherNotif) => (
                     <Link
                       key={otherNotif._id}
-                      to={`/notifications/${slugify(otherNotif.title)}`}
+                      to={`/notifications/${otherNotif._id}`}
                       className={cn(
                         "block rounded-lg border p-4 transition-colors hover:bg-muted/50",
                         otherNotif._id === id && "border-primary bg-muted"

@@ -53,7 +53,7 @@ const App = () => {
         <Route path="/settings/desktop" element={<SettingPageDesktop />} />
         <Route path="/seller-request" element={<SellerRequestPage />} />
         <Route
-          path="/notifications/:slug"
+          path="/notifications/:id"
           element={<NotificationDetailPageDesktop />}
         />
 

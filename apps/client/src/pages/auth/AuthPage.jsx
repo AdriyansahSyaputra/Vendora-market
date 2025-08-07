@@ -65,12 +65,17 @@ const AuthForm = () => {
         : { identifier: values.identifier, password: values.password };
 
       const response = await action(credentials);
+      const user = response?.user;
 
       // Redirect jika ada, atau default ke dashboard jika sukses
-      if (response?.redirect) {
-        navigate(response.redirect);
-      } else if (!isRegister) {
-        navigate("/");
+      if (user && !isRegister) {
+        if (user.role === "admin") {
+          navigate("/dashboard");
+        } else if (user.role === "seller") {
+          navigate("/store/dashboard");
+        } else {
+          navigate("/");
+        }
       } else {
         // Setelah registrasi, ganti ke mode login
         setIsRegister(false);

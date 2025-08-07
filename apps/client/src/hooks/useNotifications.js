@@ -62,24 +62,62 @@ export const useNotifications = () => {
     }
   }, [unreadCount]);
 
-  const fetchNotificationById = useCallback(async (id) => {
-    if (!id) return;
-    setIsSingleLoading(true);
-    setSingleError(null);
-    try {
-      const { data } = await axios.get(`/api/client/notifications/${id}`, {
-        withCredentials: true,
-      });
-      setSingleNotification(data);
-    } catch (err) {
-      console.error("Failed to fetch notification detail:", err);
-      setSingleError(
-        "Notification not found or you do not have permission to view it."
-      );
-    } finally {
-      setIsSingleLoading(false);
-    }
-  }, []);
+  const fetchNotificationById = useCallback(
+    async (id) => {
+      if (!id) return;
+
+      setIsSingleLoading(true);
+      setSingleError(null);
+      setSingleNotification(null);
+
+      try {
+        const { data } = await axios.get(`/api/client/notifications/${id}`, {
+          withCredentials: true,
+        });
+
+        if (!data) {
+          throw new Error("No notification data received");
+        }
+
+        setSingleNotification(data);
+
+        // Update notification list & unread count
+        setNotificationsData((prev) => {
+          let wasUnread = false;
+          const updated = prev.map((notif) => {
+            if (notif._id === id) {
+              if (!notif.isRead) wasUnread = true;
+              return { ...notif, isRead: true };
+            }
+            return notif;
+          });
+
+          if (wasUnread) {
+            setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
+          }
+
+          return updated;
+        });
+      } catch (err) {
+        const status = err.response?.status;
+        const data = err.response?.data;
+        let message = "Failed to load notification";
+
+        if (status === 404) message = "Notification not found";
+        else if (status === 403)
+          message = "You don't have permission to view this notification";
+        else if (status === 400) message = "Invalid notification ID";
+        else if (data?.message) message = data.message;
+        else if (data?.error) message = data.error;
+        else if (err.message) message = err.message;
+
+        setSingleError(message);
+      } finally {
+        setIsSingleLoading(false);
+      }
+    },
+    [setNotificationsData, setUnreadCount]
+  );
 
   return {
     notificationsData,

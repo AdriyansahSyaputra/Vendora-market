@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { Bell, LoaderCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,11 @@ const NotificationList = () => {
     useNotifications();
 
   if (loading) {
-    return <p className="p-4 text-sm text-center">Loading notifications...</p>;
+    return (
+      <p className="p-4 text-sm text-center">
+        <LoaderCircle className="animate-spin" /> Loading notifications...
+      </p>
+    );
   }
 
   if (notificationsData.length === 0) {

@@ -4,7 +4,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 mongoose
-  .connect(process.env.MONGODB_URL)
+  .connect(process.env.MONGODB_URL, {
+    family: 4,
+  })
   .then(() => {
     console.log("Connected to MongoDB");
   })
