@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,8 +18,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { EllipsisVertical } from "lucide-react";
 
 // Dummy Data
 const categories = [
@@ -56,10 +63,9 @@ const categories = [
   },
 ];
 
-export default function Categories() {
+export default function Categories({ form }) {
   return (
     <div>
-      {/* Header Halaman */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
@@ -82,31 +88,51 @@ export default function Categories() {
                 Create a new category for your products.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cat-name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="cat-name"
-                  placeholder="e.g. Smart Home"
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="cat-desc" className="text-right pt-2">
-                  Description
-                </Label>
-                <Textarea
-                  id="cat-desc"
-                  placeholder="A short description..."
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Create Category</Button>
-            </DialogFooter>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((data) => console.log(data))}
+                className="grid gap-4 py-4"
+              >
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="col-span-4">
+                        <FormLabel className="text-right">Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Smart Home" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="col-span-4">
+                        <FormLabel className="text-right">
+                          Description
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="A short description..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Create Category</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -114,10 +140,11 @@ export default function Categories() {
       {/* Grid Kategori */}
       <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {categories.map((category) => (
-          <Card key={category.name}>
+          <Card key={category.name} className="relative">
             <CardHeader>
               <CardTitle>{category.name}</CardTitle>
               <CardDescription>{category.description}</CardDescription>
+              <EllipsisVertical size={20} className="absolute top-2 right-2 cursor-pointer" />
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
