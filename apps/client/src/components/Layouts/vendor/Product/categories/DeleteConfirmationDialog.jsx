@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,25 +7,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const DeleteConfirmationDialog = ({
-  categoryName,
-  categoryId,
+  isOpen,
+  onOpenChange,
   onConfirm,
-  trigger,
+  categoryName,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleConfirm = async () => {
-    await onConfirm(categoryId);
-    setIsOpen(false);
-  };
-
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -36,14 +26,16 @@ const DeleteConfirmationDialog = ({
               {" "}
               {categoryName}{" "}
             </span>
-            category and all associated data.
+            category.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => onOpenChange(false)}>
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onConfirm}
+            className="bg-destructive hover:bg-destructive/90"
           >
             Delete Category
           </AlertDialogAction>

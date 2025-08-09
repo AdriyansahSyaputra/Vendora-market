@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -22,15 +22,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-const CategoryFormDialog = ({ onSubmit, trigger, initialData = null }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const CategoryFormDialog = ({
+  isOpen,
+  onOpenChange,
+  onSubmit,
+  initialData = null,
+}) => {
   const isEditing = Boolean(initialData);
-
   const form = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-    },
+    defaultValues: { name: "", description: "" },
   });
 
   useEffect(() => {
@@ -41,31 +41,17 @@ const CategoryFormDialog = ({ onSubmit, trigger, initialData = null }) => {
           description: initialData.description || "",
         });
       } else {
-        form.reset({
-          name: "",
-          description: "",
-        });
+        form.reset({ name: "", description: "" });
       }
     }
   }, [isOpen, initialData, form]);
 
   const handleFormSubmit = async (data) => {
-    await onSubmit(data, isEditing, initialData?._id, () => {
-      setIsOpen(false);
-      form.reset({ name: "", description: "" });
-    });
-  };
-
-  const handleOpenChange = (open) => {
-    setIsOpen(open);
-    if (!open) {
-      form.reset({ name: "", description: "" });
-    }
+    await onSubmit(data); // Cukup panggil onSubmit dengan data form
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
@@ -113,11 +99,13 @@ const CategoryFormDialog = ({ onSubmit, trigger, initialData = null }) => {
               )}
             />
             <DialogFooter className="gap-2">
-              <DialogClose asChild>
-                <Button variant="outline" type="button">
-                  Cancel
-                </Button>
-              </DialogClose>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting
                   ? "Saving..."

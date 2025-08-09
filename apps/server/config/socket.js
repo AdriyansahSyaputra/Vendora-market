@@ -24,8 +24,8 @@ export const initializeSocket = (server) => {
           delete userSocketMap[userId];
           break;
         }
+        console.log("User disconnected with id:", userId);
       }
-      console.log("User disconnected with id:", userId);
     });
   });
 

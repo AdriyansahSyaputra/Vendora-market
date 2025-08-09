@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
-import CategoryCard from "@/components/Layouts/company/Product/Category/CategoryCard";
+import CategoryCard from "@/components/Layouts/vendor/Product/categories/CategoryCard";
 import CategoryFormDialog from "@/components/Layouts/vendor/Product/categories/CategoryFormDialog";
 import DeleteConfirmationDialog from "@/components/Layouts/vendor/Product/categories/DeleteConfirmationDialog";
 import { Helmet } from "react-helmet-async";
@@ -18,15 +18,23 @@ const CategoryPage = () => {
   const [categories, setCategories] = useState([]);
   console.log(categories);
 
+  // State untuk dialog, dikontrol dari sini
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState(null);
+
   const fetchCategories = async () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get("/api/vendor/product-category", {
         withCredentials: true,
       });
-      setCategories(data.categories);
+      if (Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      }
     } catch (err) {
-      console.log("Failed to fetch categories:", err);
+      console.error("Failed to fetch categories:", err);
       setCategories([]);
     } finally {
       setIsLoading(false);
@@ -37,58 +45,66 @@ const CategoryPage = () => {
     fetchCategories();
   }, []);
 
-  const handleFormSubmit = async (data, isEditing, categoryId, closeDialog) => {
+  // Handler untuk membuka dialog tambah
+  const handleAddClick = () => {
+    setEditingCategory(null);
+    setIsFormOpen(true);
+  };
+
+  // Handler untuk membuka dialog edit
+  const handleEditClick = (category) => {
+    setEditingCategory(category);
+    setIsFormOpen(true);
+  };
+
+  // Handler untuk membuka dialog hapus
+  const handleDeleteClick = (category) => {
+    setDeletingCategory(category);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  // Handler untuk submit form (Create & Update)
+  const handleFormSubmit = async (formData) => {
+    const isEditing = Boolean(editingCategory);
     try {
       if (isEditing) {
         await axios.put(
-          `/api/vendor/product-category/${categoryId._id}/update`,
-          data,
-          {
-            withCredentials: true,
-          }
+          `/api/vendor/product-category/${editingCategory._id}/update`,
+          formData,
+          { withCredentials: true }
         );
-
-        toast.success("Category updated successfully.", {
-          description: "Category has been updated successfully.",
-        });
+        toast.success("Category updated successfully.");
       } else {
-        await axios.post("/api/vendor/product-category/create", data, {
+        await axios.post("/api/vendor/product-category/create", formData, {
           withCredentials: true,
         });
-
-        toast.success("Category created successfully.", {
-          description: "Category has been created successfully.",
-        });
+        toast.success("Category created successfully.");
       }
-
       fetchCategories();
-      closeDialog();
+      setIsFormOpen(false); // Tutup dialog setelah berhasil
     } catch (err) {
-      console.log("Failed to save category:", err);
+      console.error("Failed to save category:", err);
       toast.error("Failed to save category.", {
-        description: "An error occurred while saving the category.",
+        description: err.response?.data?.message || "An error occurred.",
       });
     }
   };
 
-  const handleDeleteConfirm = async (categoryId) => {
+  // Handler untuk konfirmasi hapus
+  const handleDeleteConfirm = async () => {
+    if (!deletingCategory) return;
     try {
       await axios.delete(
-        `/api/vendor/product-category/${categoryId._id}/delete`,
-        {
-          withCredentials: true,
-        }
+        `/api/vendor/product-category/${deletingCategory._id}/delete`,
+        { withCredentials: true }
       );
-
+      toast.success("Category deleted successfully.");
       fetchCategories();
-
-      toast.success("Category deleted successfully.", {
-        description: "Category has been deleted successfully.",
-      });
+      setIsDeleteConfirmOpen(false); // Tutup dialog setelah berhasil
     } catch (err) {
-      console.log("Failed to delete category:", err);
+      console.error("Failed to delete category:", err);
       toast.error("Failed to delete category.", {
-        description: "An error occurred while deleting the category.",
+        description: err.response?.data?.message || "An error occurred.",
       });
     }
   };
@@ -120,14 +136,9 @@ const CategoryPage = () => {
               </div>
 
               <div className="flex justify-end mb-8">
-                <CategoryFormDialog
-                  onSubmit={handleFormSubmit}
-                  trigger={
-                    <Button className="cursor-pointer">
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Category
-                    </Button>
-                  }
-                />
+                <Button className="cursor-pointer" onClick={handleAddClick}>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Category
+                </Button>
               </div>
 
               {isLoading ? (
@@ -142,15 +153,9 @@ const CategoryPage = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Create your first category to get started
                   </p>
-                  <CategoryFormDialog
-                    onSubmit={handleFormSubmit}
-                    trigger={
-                      <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add First
-                        Category
-                      </Button>
-                    }
-                  />
+                  <Button onClick={handleAddClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add First Category
+                  </Button>
                 </div>
               ) : (
                 <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -158,8 +163,8 @@ const CategoryPage = () => {
                     <CategoryCard
                       key={category._id}
                       category={category}
-                      onEdit={(category) => handleFormSubmit}
-                      onDelete={handleDeleteConfirm}
+                      onEditClick={() => handleEditClick(category)}
+                      onDeleteClick={() => handleDeleteClick(category)}
                     />
                   ))}
                 </div>
@@ -168,6 +173,20 @@ const CategoryPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Dialog dirender di sini, di luar loop, dan dikontrol oleh state */}
+      <CategoryFormDialog
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSubmit={handleFormSubmit}
+        initialData={editingCategory}
+      />
+      <DeleteConfirmationDialog
+        isOpen={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        onConfirm={handleDeleteConfirm}
+        categoryName={deletingCategory?.name}
+      />
     </>
   );
 };
