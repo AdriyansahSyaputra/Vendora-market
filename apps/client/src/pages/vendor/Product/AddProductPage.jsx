@@ -1,11 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
 import AddProduct from "@/components/Layouts/vendor/Product/AddProduct";
 import { Helmet } from "react-helmet-async";
+import axios from "axios";
 
 const AddProductPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  const fetchCategories = async () => {
+    try {
+      const { data } = await axios.get("/api/vendor/product-category", {
+        withCredentials: true,
+      });
+      if (Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+      setCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   return (
     <>
@@ -31,7 +51,7 @@ const AddProductPage = () => {
                 </p>
               </div>
 
-              <AddProduct />
+              <AddProduct categories={categories} />
             </div>
           </main>
         </div>

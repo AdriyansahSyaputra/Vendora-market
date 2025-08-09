@@ -37,6 +37,7 @@ import LogActivityPage from "./pages/company/LogActivityPage";
 import AuthPage from "./pages/auth/AuthPage";
 import SellerRequestPage from "./pages/client/SellerRequestPage";
 import NotificationDetailPageDesktop from "./pages/client/NotificationDetailPageDesktop";
+import ProductDetailPage from "./pages/vendor/Product/ProductDetailPage";
 
 const App = () => {
   return (
@@ -57,12 +58,14 @@ const App = () => {
           element={<NotificationDetailPageDesktop />}
         />
 
+        {/* ======================================================================= */}
         {/* Seller routes */}
         <Route path="/store/dashboard" element={<DashboardPage />} />
         {/* Product routes */}
         <Route path="/store/products" element={<AllProductPage />} />
         <Route path="/store/products/new" element={<AddProductPage />} />
         <Route path="/store/products/categories" element={<CategoryPage />} />
+        <Route path="/store/products/details/:slug" element={<ProductDetailPage />} />
 
         {/* Order routes */}
         <Route path="/store/orders" element={<AllOrdersPage />} />
@@ -93,6 +96,7 @@ const App = () => {
 
         <Route path="/store/settings/store" element={<StoreSettingPage />} />
 
+        {/* ======================================================================= */}
         {/* Company Routes */}
         <Route path="/dashboard" element={<CompanyDashboardPage />} />
         <Route path="/dashboard/users" element={<AllUsersPage />} />

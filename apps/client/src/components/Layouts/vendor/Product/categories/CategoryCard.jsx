@@ -33,7 +33,7 @@ const CategoryCard = ({ category, onEditClick, onDeleteClick }) => {
           <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             {category.name}
           </CardTitle>
-          <CardDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+          <CardDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-5">
             {category.description || "No description provided."}
           </CardDescription>
         </div>
