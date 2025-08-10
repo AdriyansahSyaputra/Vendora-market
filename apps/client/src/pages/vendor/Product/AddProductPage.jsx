@@ -4,6 +4,9 @@ import Topbar from "@/components/Templates/company/topbar/Topbar";
 import AddProduct from "@/components/Layouts/vendor/Product/AddProduct";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const AddProductPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -30,6 +33,8 @@ const AddProductPage = () => {
   return (
     <>
       <Helmet title="Add Product" />
+
+      <Toaster richColors position="top-center" />
 
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
