@@ -47,20 +47,6 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const formatNumber = (number) => {
-  return new Intl.NumberFormat("id-ID").format(number);
-};
-
-const calculateTotalStock = (product) => {
-  if (product.variations && product.variations.length > 0) {
-    return product.variations.reduce(
-      (total, variation) => total + variation.stock,
-      0
-    );
-  }
-  return product.stock || 0;
-};
-
 const getStockStatus = (stock) => {
   if (stock === 0) return { variant: "destructive", label: "Out of Stock" };
   if (stock < 10) return { variant: "destructive", label: "Low Stock" };
@@ -159,12 +145,8 @@ const ProductTable = ({
           </TableHeader>
           <TableBody>
             {currentProducts.map((product, index) => {
-              const totalStock = calculateTotalStock(product);
-              const stockStatus = getStockStatus(totalStock);
+              const stockStatus = getStockStatus(product.totalStock);
               const statusBadge = getStatusBadge(product.status);
-              const discountedPrice = product.discount
-                ? product.price - (product.price * product.discount) / 100
-                : product.price;
 
               return (
                 <TableRow
@@ -219,7 +201,7 @@ const ProductTable = ({
                           variant={stockStatus.variant}
                           className="text-xs"
                         >
-                          {totalStock}
+                          {product.totalStock}
                         </Badge>
                       </div>
                     </div>
@@ -228,7 +210,7 @@ const ProductTable = ({
                   {/* Category - Hidden on mobile */}
                   <TableCell className="hidden lg:table-cell">
                     <span className="text-sm text-muted-foreground">
-                      {product.category || "Uncategorized"}
+                      {product.category.name || "Uncategorized"}
                     </span>
                   </TableCell>
 
@@ -236,7 +218,7 @@ const ProductTable = ({
                   <TableCell className="hidden lg:table-cell">
                     <div className="space-y-1">
                       <div className="font-semibold text-sm">
-                        {formatCurrency(discountedPrice)}
+                        {formatCurrency(product.discountedPrice)}
                       </div>
                       {product.discount > 0 && (
                         <div className="text-xs text-muted-foreground line-through">
@@ -249,7 +231,7 @@ const ProductTable = ({
                   {/* Stock - Hidden on mobile */}
                   <TableCell className="hidden md:table-cell">
                     <Badge variant={stockStatus.variant} className="text-xs">
-                      {formatNumber(totalStock)}
+                      {product.totalStock}
                     </Badge>
                     {product.variations && product.variations.length > 0 && (
                       <div className="text-xs text-muted-foreground mt-1">
@@ -263,7 +245,7 @@ const ProductTable = ({
                     <div className="flex items-center gap-1 text-sm">
                       <TrendingUp className="h-3 w-3 text-green-600" />
                       <span className="font-medium">
-                        {formatNumber(product.soldCount)}
+                        {product.soldCount}
                       </span>
                     </div>
                   </TableCell>

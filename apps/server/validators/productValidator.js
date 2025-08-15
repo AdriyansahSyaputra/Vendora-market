@@ -7,36 +7,23 @@ const objectIdSchema = z.string().refine(
     return mongoose.Types.ObjectId.isValid(val);
   },
   {
-    message: "Invalid MongoDB ObjectId",
+    message: "Category is required",
   }
 );
 
 // Skema dasar untuk variasi produk
 const variationSchema = z.object({
-  size: z
-    .string({ required_error: "Variation size is required." })
-    .trim()
-    .min(1, "Variation size cannot be empty."),
-  color: z
-    .string({ required_error: "Variation color is required." })
-    .trim()
-    .min(1, "Variation color cannot be empty."),
-  stock: z.coerce
-    .number({ required_error: "Variation stock is required." })
-    .min(0, "Variation stock cannot be negative."),
+  size: z.string().trim().min(1, "Variation size cannot be empty."),
+  color: z.string().trim().min(1, "Variation color cannot be empty."),
+  stock: z.coerce.number().min(0, "Variation stock cannot be negative."),
 });
 
 // Skema utama untuk validasi data produk
 export const productSchema = z
   .object({
-    name: z
-      .string({ required_error: "Product name is required." })
-      .trim()
-      .min(3, "Product name must be at least 3 characters."),
-    description: z.string().trim().optional(),
-    price: z.coerce
-      .number({ required_error: "Price is required." })
-      .positive("Price must be a positive number."),
+    name: z.string().trim().min(1, "Product name is required."),
+    description: z.string().trim().min(1, "Description cannot be empty."),
+    price: z.coerce.number().min(1, "Price is required"),
     discount: z.coerce
       .number()
       .min(0)
@@ -44,18 +31,28 @@ export const productSchema = z
       .default(0)
       .optional(),
     category: objectIdSchema,
-    stock: z.coerce.number().min(0, "Stock cannot be negative.").optional(),
+    stock: z.coerce.number().min(0, "Stock cannot be negative."),
     promos: z.array(z.string()).optional(),
     variations: z.array(variationSchema).optional(),
     weight: z.coerce
-      .number()
-      .positive("Weight must be a positive number.")
-      .optional(),
+      .number({
+        invalid_type_error: "Weight must be a valid number.",
+      })
+      .min(1, "Weight is required and must be a positive number."),
     dimensions: z
       .object({
-        length: z.coerce.number().positive("Length must be a positive number."),
-        width: z.coerce.number().positive("Width must be a positive number."),
-        height: z.coerce.number().positive("Height must be a positive number."),
+        length: z.coerce
+          .number()
+          .positive("Length must be a positive number.")
+          .optional(),
+        width: z.coerce
+          .number()
+          .positive("Width must be a positive number.")
+          .optional(),
+        height: z.coerce
+          .number()
+          .positive("Height must be a positive number.")
+          .optional(),
       })
       .optional(),
     status: z

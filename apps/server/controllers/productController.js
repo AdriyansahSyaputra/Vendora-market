@@ -35,8 +35,6 @@ export const createProduct = async (req, res) => {
     return res.status(400).json({ message: "At least one image is required." });
   }
 
-  console.log(storeId.name);
-
   try {
     const uploadFolder = `products/${storeId}`;
     const imageUrls = await uploadFilesToCloudinary(req.files, uploadFolder);
@@ -171,5 +169,32 @@ export const updateProduct = async (req, res) => {
       message: "Server error while updating product.",
       error: err.message,
     });
+  }
+};
+
+// Ambil list data product berdasarkan kategori
+export const getProductsByStore = async (req, res) => {
+  const storeId = req.storeId;
+
+  if (!storeId) {
+    return res.status(500).json({
+      message: "Store ID tidak ditemukan di request. Middleware mungkin gagal.",
+    });
+  }
+
+  try {
+    const products = await Product.find({
+      storeId: storeId,
+    })
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: "Products retrieved successfully",
+      count: products.length,
+      products: products,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import { validate } from "../middlewares/validateRequest.js";
 import { authenticateUser } from "../middlewares/authMiddleware.js";
 import { findUserStore } from "../middlewares/findUserStore.js";
@@ -17,14 +16,31 @@ import { productSchema } from "../validators/productValidator.js";
 import {
   createProduct,
   updateProduct,
+  getProductsByStore,
 } from "../controllers/productController.js";
 import { parseJsonFields } from "../middlewares/parseFormDataMiddleware.js";
+import {
+  createUploadMiddleware,
+  validateFileCount,
+} from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 const productJsonFields = ["variations", "dimensions", "promos"];
+
+// Configurasi Multer untuk upload file
+const productUploadConfig = {
+  fieldName: "images",
+  maxCount: 5,
+  maxSizeMB: 3,
+};
+
+const uploadProductImages = createUploadMiddleware(productUploadConfig);
+const validateProductImageCount = validateFileCount({
+  fieldName: "images",
+  minCount: 1,
+  message: "At least one image is required.",
+});
 
 // Route product category start
 router.post(
@@ -64,7 +80,8 @@ router.post(
   "/product/create",
   authenticateUser,
   findUserStore,
-  upload.array("images", 5),
+  uploadProductImages,
+  validateProductImageCount,
   parseJsonFields(productJsonFields),
   validate(productSchema),
   createProduct
@@ -74,11 +91,14 @@ router.put(
   "/product/:id/update",
   authenticateUser,
   findUserStore,
-  upload.array("images", 5),
+  uploadProductImages,
+  validateProductImageCount,
   parseJsonFields(productJsonFields),
   validate(productSchema),
   updateProduct
 );
+
+router.get("/products", authenticateUser, findUserStore, getProductsByStore);
 // Route product end
 
 export default router;

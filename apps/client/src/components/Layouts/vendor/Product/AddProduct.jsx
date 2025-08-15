@@ -74,12 +74,10 @@ const AddProduct = ({ categories }) => {
     name: "variations",
   });
 
-  // Ambil isSubmitting dari formState untuk menonaktifkan tombol
   const { isSubmitting } = form.formState;
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    // ... (Logika validasi gambar Anda di sini tetap sama) ...
     const newPreviews = files.map((file) => ({
       source: file,
       url: URL.createObjectURL(file),
@@ -154,16 +152,24 @@ const AddProduct = ({ categories }) => {
       const errorData = err.response?.data;
 
       if (errorData && errorData.errors) {
-        // Clear previous errors first
         form.clearErrors();
 
-        // Set new errors from server response
-        Object.entries(errorData.errors).forEach(([field, message]) => {
+        const entries = Object.entries(errorData.errors);
+        entries.forEach(([field, message]) => {
           form.setError(field, {
             type: "server",
             message: Array.isArray(message) ? message[0] : message,
           });
         });
+
+        if (entries.length > 0) {
+          const firstField = entries[0][0];
+          try {
+            form.setFocus(firstField);
+          } catch {
+            // ignore if focus fails for complex names
+          }
+        }
 
         toast.error("Validation failed. Please check the form.");
       } else {
@@ -171,17 +177,7 @@ const AddProduct = ({ categories }) => {
           description: errorData?.message || "An unexpected error occurred.",
         });
       }
-
-      // Re-enable the form submission
-      form.reset(data);
     }
-  };
-
-  const handleReset = () => {
-    form.reset();
-    form.clearErrors();
-    setImagePreviews([]);
-    setHasVariations(false);
   };
 
   return (
@@ -663,9 +659,7 @@ const AddProduct = ({ categories }) => {
                 <AccordionItem value="item-1">
                   <AccordionTrigger className="px-6 bg-muted/50 rounded-lg">
                     <div className="flex flex-col items-start">
-                      <span className="font-semibold">
-                        Weight & Dimensions (Optional)
-                      </span>
+                      <span className="font-semibold">Weight & Dimensions</span>
                       <span className="text-sm text-muted-foreground font-normal">
                         Used for shipping cost calculation.
                       </span>
@@ -696,7 +690,7 @@ const AddProduct = ({ categories }) => {
                           name="dimensions.length"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Length (cm)</FormLabel>
+                              <FormLabel>Length (cm) (Optional)</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -713,7 +707,7 @@ const AddProduct = ({ categories }) => {
                           name="dimensions.width"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Width (cm)</FormLabel>
+                              <FormLabel>Width (cm) (Optional)</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -730,7 +724,7 @@ const AddProduct = ({ categories }) => {
                           name="dimensions.height"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Height (cm)</FormLabel>
+                              <FormLabel>Height (cm) (Optional)</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -791,9 +785,6 @@ const AddProduct = ({ categories }) => {
 
               {/* Form Actions */}
               <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={handleReset}>
-                  Cancel
-                </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

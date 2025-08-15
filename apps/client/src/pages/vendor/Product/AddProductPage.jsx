@@ -4,7 +4,6 @@ import Topbar from "@/components/Templates/company/topbar/Topbar";
 import AddProduct from "@/components/Layouts/vendor/Product/AddProduct";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
-import { useForm, useFieldArray } from "react-hook-form";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 

@@ -53,32 +53,14 @@ const EditProductModal = ({
   selectedProduct,
   onOpenChange,
   categories,
+  isSubmitting,
+  errors,
+  setErrors,
+  onSubmit,
+  form,
 }) => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [hasVariations, setHasVariations] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState([]);
-
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-      price: 0,
-      discount: 0,
-      category: "",
-      stock: 0,
-      isPromo: false,
-      status: "active",
-      weight: 0,
-      dimensions: {
-        length: 0,
-        width: 0,
-        height: 0,
-      },
-      variations: [],
-      images: [],
-    },
-  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -88,25 +70,18 @@ const EditProductModal = ({
   // Reset form when selectedProduct changes
   useEffect(() => {
     if (selectedProduct && isEditDialogOpen) {
-      // Calculate total stock from variations if they exist
-      const totalStock =
-        selectedProduct.variations && selectedProduct.variations.length > 0
-          ? selectedProduct.variations.reduce(
-              (acc, v) => acc + (v.stock || 0),
-              0
-            )
-          : selectedProduct.stock || 0;
-
       const formData = {
         ...selectedProduct,
-        stock: totalStock,
+        stock: selectedProduct.totalStock,
         price: selectedProduct.price || 0,
+        category:
+          selectedProduct.category?._id || selectedProduct.category || "",
         discount: selectedProduct.discount || 0,
         weight: selectedProduct.weight || 0,
         dimensions: {
-          length: selectedProduct.dimensions?.length || 0,
-          width: selectedProduct.dimensions?.width || 0,
-          height: selectedProduct.dimensions?.height || 0,
+          length: selectedProduct.dimensions?.length || undefined,
+          width: selectedProduct.dimensions?.width || undefined,
+          height: selectedProduct.dimensions?.height || undefined,
         },
         variations: selectedProduct.variations || [],
       };
@@ -203,126 +178,6 @@ const EditProductModal = ({
       form.setValue("variations", []);
     }
   };
-
-  const validateForm = (data) => {
-    const validationErrors = [];
-
-    // Basic validations
-    if (!data.name?.trim()) {
-      validationErrors.push("Product name is required");
-    }
-
-    if (!data.description?.trim()) {
-      validationErrors.push("Product description is required");
-    }
-
-    if (!data.price || data.price <= 0) {
-      validationErrors.push("Price must be greater than 0");
-    }
-
-    if (data.discount < 0 || data.discount > 100) {
-      validationErrors.push("Discount must be between 0 and 100");
-    }
-
-    if (!data.category) {
-      validationErrors.push("Category is required");
-    }
-
-    // Stock validation
-    if (hasVariations) {
-      if (!data.variations || data.variations.length === 0) {
-        validationErrors.push(
-          "At least one variation is required when variations are enabled"
-        );
-      } else {
-        data.variations.forEach((variation, index) => {
-          if (!variation.size) {
-            validationErrors.push(`Variation ${index + 1}: Size is required`);
-          }
-          if (!variation.color?.trim()) {
-            validationErrors.push(`Variation ${index + 1}: Color is required`);
-          }
-          if (!variation.stock || variation.stock < 0) {
-            validationErrors.push(
-              `Variation ${index + 1}: Stock must be 0 or greater`
-            );
-          }
-        });
-      }
-    } else {
-      if (data.stock < 0) {
-        validationErrors.push("Stock must be 0 or greater");
-      }
-    }
-
-    // Image validation
-    if (!data.images || data.images.length === 0) {
-      validationErrors.push("At least one product image is required");
-    }
-
-    return validationErrors;
-  };
-
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    setErrors([]);
-
-    try {
-      // Validate form data
-      const validationErrors = validateForm(data);
-
-      if (validationErrors.length > 0) {
-        setErrors(validationErrors);
-        return;
-      }
-
-      // Transform data for API
-      const transformedData = {
-        ...data,
-        price: parseFloat(data.price),
-        discount: parseFloat(data.discount) || 0,
-        weight: parseFloat(data.weight) || 0,
-        dimensions: {
-          length: parseFloat(data.dimensions?.length) || 0,
-          width: parseFloat(data.dimensions?.width) || 0,
-          height: parseFloat(data.dimensions?.height) || 0,
-        },
-      };
-
-      // Calculate total stock from variations if they exist
-      if (hasVariations && data.variations?.length > 0) {
-        transformedData.stock = data.variations.reduce(
-          (acc, v) => acc + parseInt(v.stock || 0),
-          0
-        );
-        transformedData.variations = data.variations.map((v) => ({
-          ...v,
-          stock: parseInt(v.stock || 0),
-        }));
-      } else {
-        transformedData.stock = parseInt(data.stock || 0);
-        transformedData.variations = [];
-      }
-
-      // Here you would make the API call to update the product
-      console.log("Form Submitted for Update:", transformedData);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Show success message
-      alert("Product updated successfully!");
-
-      // Close modal
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error updating product:", error);
-      setErrors(["Failed to update product. Please try again."]);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
 
   return (
     <Dialog open={isEditDialogOpen} onOpenChange={onOpenChange}>

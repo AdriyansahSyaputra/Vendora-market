@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
 import axios from "axios";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
 
 const createSlug = (name) => {
   return name
@@ -25,124 +28,6 @@ const createSlug = (name) => {
     .trim("-"); // Remove leading/trailing hyphens
 };
 
-const categories = [
-  { _id: "cat_electronics_123", name: "Electronics" },
-  { _id: "cat_furniture_456", name: "Furniture" },
-  { _id: "cat_wearables_789", name: "Wearables" },
-];
-
-// Enhanced dummy data with proper structure
-const products = [
-  {
-    _id: "prod_12345",
-    storeId: "store_abc",
-    name: "Premium Wireless Headphones",
-    description:
-      "Experience immersive sound with these noise-cancelling headphones. Features a 20-hour battery life, comfortable earcups, and a sleek, modern design.",
-    price: 1499000,
-    discount: 15,
-    category: "cat_electronics_123",
-    stock: 0, // Main stock is 0 because it has variations
-    isPromo: true,
-    soldCount: 152,
-    variations: [
-      { size: "M", color: "Matte Black", stock: 25 },
-      { size: "M", color: "Pearl White", stock: 18 },
-    ],
-    images: [
-      "https://placehold.co/600x600/000000/FFFFFF?text=Main+Image",
-      "https://placehold.co/600x600/e2e8f0/334155?text=Side+View",
-    ],
-    weight: 250,
-    dimensions: { length: 18, width: 15, height: 8 },
-    status: "active",
-    averageRating: 4.8,
-    totalReviews: 88,
-    createdAt: "2024-02-10T10:15:00Z",
-    updatedAt: "2024-03-08T16:45:00Z",
-    tags: ["ergonomic", "office", "furniture", "productivity"],
-    specifications: {
-      Material: "Mesh and Plastic",
-      "Weight Capacity": "120kg",
-      "Height Adjustment": "Yes",
-      "Lumbar Support": "Yes",
-      Armrests: "Adjustable",
-      Warranty: "3 years",
-    },
-  },
-  {
-    _id: "prod_12346",
-    storeId: "store_abc",
-    name: "Ergonomic Office Chair",
-    description:
-      "Stay comfortable during long working hours with this ergonomic chair. Adjustable height, lumbar support, and breathable mesh back.",
-    price: 2499000,
-    discount: 10,
-    category: "cat_furniture_456",
-    stock: 7, // Has main stock, no variations
-    isPromo: false,
-    soldCount: 78,
-    variations: [],
-    images: ["https://placehold.co/600x600/1e293b/FFFFFF?text=Front+View"],
-    weight: 15000,
-    dimensions: { length: 65, width: 65, height: 110 },
-    status: "active",
-    averageRating: 4.5,
-    totalReviews: 45,
-    createdAt: "2024-01-20T12:00:00Z",
-    updatedAt: "2024-03-05T09:30:00Z",
-    tags: ["smartwatch", "fitness", "health", "gps"],
-    specifications: {
-      Display: "1.4-inch AMOLED",
-      "Battery Life": "7 days",
-      "Water Resistance": "50 meters",
-      GPS: "Built-in",
-      "Heart Rate Monitor": "Yes",
-      "Sleep Tracking": "Yes",
-      Warranty: "2 years",
-    },
-  },
-  {
-    _id: "prod_12347",
-    storeId: "store_abc",
-    name: "Smart Fitness Watch",
-    description:
-      "Track your health and fitness goals with this advanced smartwatch. Features heart rate monitoring, GPS, and 7-day battery life.",
-    price: 3299000,
-    discount: 20,
-    category: "cat_electronics_123",
-    stock: 0,
-    isPromo: true,
-    soldCount: 234,
-    variations: [
-      { size: "42mm", color: "Space Gray", stock: 15 },
-      { size: "42mm", color: "Silver", stock: 22 },
-      { size: "46mm", color: "Space Gray", stock: 18 },
-    ],
-    images: [
-      "https://placehold.co/600x600/1f2937/FFFFFF?text=Watch+Front",
-      "https://placehold.co/600x600/374151/FFFFFF?text=Watch+Side",
-    ],
-    weight: 45,
-    dimensions: { length: 4.5, width: 4.0, height: 1.2 },
-    status: "active",
-    averageRating: 4.6,
-    totalReviews: 156,
-    createdAt: "2024-01-15T08:30:00Z",
-    updatedAt: "2024-03-10T14:22:00Z",
-    tags: ["wireless", "bluetooth", "noise-cancelling", "premium"],
-    specifications: {
-      "Battery Life": "20 hours",
-      Connectivity: "Bluetooth 5.0",
-      "Driver Size": "40mm",
-      "Frequency Response": "20Hz - 20kHz",
-      Impedance: "32 ohms",
-      "Charging Port": "USB-C",
-      Warranty: "2 years",
-    },
-  },
-];
-
 const ITEMS_PER_PAGE = 15;
 
 const AllProductPage = () => {
@@ -151,8 +36,32 @@ const AllProductPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [products, setProducts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
+
+    const form = useForm({
+      defaultValues: {
+        name: "",
+        description: "",
+        price: 0,
+        discount: 0,
+        category: "",
+        stock: 0,
+        isPromo: false,
+        status: "active",
+        weight: 0,
+        dimensions: {
+          length: undefined,
+          width: undefined,
+          height: undefined,
+        },
+        variations: [],
+        images: [],
+      },
+    });
 
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
   const currentProducts = products.slice(
@@ -160,9 +69,109 @@ const AllProductPage = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Fetch products data
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/vendor/products", {
+        withCredentials: true,
+      });
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch Categories data
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get("/api/vendor/product-category", {
+        withCredentials: true,
+      });
+      setCategories(res.data.categories);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
+
   const handleEditClick = (product) => {
     setSelectedProduct(product);
     setIsEditDialogOpen(true);
+  };
+
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+    setErrors([]); // Bersihkan error sebelumnya
+
+    // 1. Buat instance FormData
+    const formData = new FormData();
+
+    // 2. Pisahkan antara URL gambar lama (string) dan file gambar baru (object)
+    const existingImageUrls = data.images.filter(
+      (img) => typeof img === "string"
+    );
+    const newImageFiles = data.images.filter((img) => img instanceof File);
+
+    // 3. Tambahkan URL lama ke field 'existingImages'. Backend akan menggunakan ini.
+    // WAJIB di-stringify agar bisa dikirim sebagai satu field.
+    formData.append("existingImages", JSON.stringify(existingImageUrls));
+
+    // 4. Tambahkan file-file baru. Multer di backend akan menangkap ini di `req.files`.
+    newImageFiles.forEach((file) => {
+      formData.append("images", file); // Nama field 'images' harus cocok dengan multer
+    });
+
+    // 5. Tambahkan sisa data form ke FormData
+    Object.keys(data).forEach((key) => {
+      if (key !== "images") {
+        // Lewati 'images' karena sudah diproses
+        const value = data[key];
+        // Objek/Array perlu di-stringify
+        if (typeof value === "object" && value !== null) {
+          formData.append(key, JSON.stringify(value));
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      }
+    });
+
+    try {
+      // 6. Kirim FormData ke API. Axios akan otomatis mengatur header yang benar.
+      await axios.put(
+        `/api/vendor/product/${selectedProduct._id}/update`,
+        formData,
+        { withCredentials: true }
+      );
+
+      toast.success("Product updated successfully!");
+      fetchProducts(); // Muat ulang daftar produk
+      setIsEditDialogOpen(false); // Tutup modal
+    } catch (error) {
+      console.error("Error updating product:", error);
+      const errorData = error.response?.data;
+
+      // Tampilkan error validasi dari server ke field yang sesuai
+      if (errorData && errorData.errors) {
+        Object.entries(errorData.errors).forEach(([field, message]) => {
+          form.setError(field, { type: "server", message });
+        });
+        toast.error("Validation failed. Please check the form.");
+      } else {
+        // Tampilkan error umum
+        setErrors([
+          errorData?.message || "Failed to update product. Please try again.",
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false); // Pastikan tombol submit aktif kembali
+    }
   };
 
   const handleViewProduct = (product) => {
@@ -196,6 +205,8 @@ const AllProductPage = () => {
   return (
     <>
       <Helmet title="All Products" />
+
+      <Toaster richColors position="top-center" />
 
       <div className="flex min-h-screen w-full bg-muted/40">
         {/* Sidebar Desktop */}
@@ -240,6 +251,11 @@ const AllProductPage = () => {
                   selectedProduct={selectedProduct}
                   categories={categories}
                   onOpenChange={setIsEditDialogOpen}
+                  onSubmit={onSubmit}
+                  isSubmitting={isSubmitting}
+                  errors={errors}
+                  setErrors={setErrors}
+                  form={form}
                 />
               </Card>
             </div>
