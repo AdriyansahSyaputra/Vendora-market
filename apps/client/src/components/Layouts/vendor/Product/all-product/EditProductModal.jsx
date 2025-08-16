@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, PlusCircle, X, FileUp, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,13 +39,9 @@ import {
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const formatCurrency = (value) => {
-  if (value === null || value === undefined || isNaN(value)) return "";
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value);
+const formatNumber = (value) => {
+  if (!value) return "";
+  return new Intl.NumberFormat("en-US").format(value);
 };
 
 const EditProductModal = ({
@@ -595,7 +591,7 @@ const EditProductModal = ({
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
+                              type="text"
                               min="0"
                               step="1000"
                               placeholder="0"
@@ -603,7 +599,7 @@ const EditProductModal = ({
                             />
                           </FormControl>
                           <FormDescription>
-                            {field.value && formatCurrency(field.value)}
+                            {field.value && formatNumber(field.value)}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

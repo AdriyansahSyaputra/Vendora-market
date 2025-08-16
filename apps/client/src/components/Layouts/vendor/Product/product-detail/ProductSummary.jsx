@@ -68,7 +68,7 @@ const ProductSummary = ({
         {/* Category */}
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Category</span>
-          <Badge variant="outline">{product.category}</Badge>
+          <Badge variant="outline">{product.category.name}</Badge>
         </div>
 
         {/* Physical Properties */}

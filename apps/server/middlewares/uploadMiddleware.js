@@ -71,15 +71,19 @@ export const validateFileCount = ({ fieldName, minCount, message }) => {
   return (req, res, next) => {
     const newFiles = req.files || (req.file ? [req.file] : []);
 
-    // 2. Ambil URL file lama dari body
-    let existingImageUrls = [];
-    if (req.body[fieldName]) {
-      const existing = Array.isArray(req.body[fieldName])
-        ? req.body[fieldName]
-        : [req.body[fieldName]];
-      // Pastikan hanya menghitung string (URL), bukan objek File
-      existingImageUrls = existing.filter((item) => typeof item === "string");
-    }
+      let existingImageUrls = [];
+      if (req.body.existingImages) {
+        try {
+          const existing = JSON.parse(req.body.existingImages);
+          if (Array.isArray(existing)) {
+            existingImageUrls = existing.filter(
+              (item) => typeof item === "string"
+            );
+          }
+        } catch (e) {
+          // Abaikan jika parsing gagal
+        }
+      }
 
     // 3. Hitung totalnya
     const totalCount = newFiles.length + existingImageUrls.length;

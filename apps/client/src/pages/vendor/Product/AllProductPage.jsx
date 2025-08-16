@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Templates/vendor/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
@@ -19,16 +19,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 
-const createSlug = (name) => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "") // Remove special characters
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
-    .trim("-"); // Remove leading/trailing hyphens
-};
-
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 10;
 
 const AllProductPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -40,28 +31,33 @@ const AllProductPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [filters, setFilters] = useState({
+    searchQuery: "",
+    category: "all",
+    stock: "",
+  });
   const navigate = useNavigate();
 
-    const form = useForm({
-      defaultValues: {
-        name: "",
-        description: "",
-        price: 0,
-        discount: 0,
-        category: "",
-        stock: 0,
-        isPromo: false,
-        status: "active",
-        weight: 0,
-        dimensions: {
-          length: undefined,
-          width: undefined,
-          height: undefined,
-        },
-        variations: [],
-        images: [],
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      discount: 0,
+      category: "",
+      stock: 0,
+      isPromo: false,
+      status: "active",
+      weight: 0,
+      dimensions: {
+        length: undefined,
+        width: undefined,
+        height: undefined,
       },
-    });
+      variations: [],
+      images: [],
+    },
+  });
 
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
   const currentProducts = products.slice(
@@ -70,70 +66,74 @@ const AllProductPage = () => {
   );
 
   // Fetch products data
-  const fetchProducts = async () => {
+  const fetchFilteredProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/vendor/products", {
+      const params = {
+        search: filters.searchQuery,
+        category: filters.category !== "all" ? filters.category : undefined,
+        stock: filters.stock,
+      };
+      const res = await axios.get("/api/vendor/products", {
+        params,
         withCredentials: true,
       });
-      setProducts(response.data.products);
+      setProducts(res.data.products);
     } catch (error) {
       console.error("Failed to fetch products:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Fetch Categories data
-  const fetchCategories = async () => {
-    try {
-      const res = await axios.get("/api/vendor/product-category", {
-        withCredentials: true,
-      });
-      setCategories(res.data.categories);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchProducts();
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("/api/vendor/product-category", {
+          withCredentials: true,
+        });
+        setCategories(res.data.categories);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    fetchFilteredProducts();
+  }, [fetchFilteredProducts]);
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [filterType]: value,
+    }));
+  };
 
   const handleEditClick = (product) => {
     setSelectedProduct(product);
     setIsEditDialogOpen(true);
   };
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true);
-    setErrors([]); // Bersihkan error sebelumnya
-
-    // 1. Buat instance FormData
+  const createProductFormData = (data) => {
     const formData = new FormData();
 
-    // 2. Pisahkan antara URL gambar lama (string) dan file gambar baru (object)
-    const existingImageUrls = data.images.filter(
-      (img) => typeof img === "string"
-    );
-    const newImageFiles = data.images.filter((img) => img instanceof File);
+    const existingImageUrls =
+      data.images?.filter((img) => typeof img === "string") || [];
+    const newImageFiles =
+      data.images?.filter((img) => img instanceof File) || [];
 
-    // 3. Tambahkan URL lama ke field 'existingImages'. Backend akan menggunakan ini.
-    // WAJIB di-stringify agar bisa dikirim sebagai satu field.
     formData.append("existingImages", JSON.stringify(existingImageUrls));
 
-    // 4. Tambahkan file-file baru. Multer di backend akan menangkap ini di `req.files`.
     newImageFiles.forEach((file) => {
-      formData.append("images", file); // Nama field 'images' harus cocok dengan multer
+      formData.append("images", file);
     });
 
-    // 5. Tambahkan sisa data form ke FormData
     Object.keys(data).forEach((key) => {
       if (key !== "images") {
-        // Lewati 'images' karena sudah diproses
         const value = data[key];
-        // Objek/Array perlu di-stringify
         if (typeof value === "object" && value !== null) {
           formData.append(key, JSON.stringify(value));
         } else if (value !== undefined && value !== null) {
@@ -142,8 +142,16 @@ const AllProductPage = () => {
       }
     });
 
+    return formData;
+  };
+
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+    setErrors([]);
+
+    const formData = createProductFormData(data);
+
     try {
-      // 6. Kirim FormData ke API. Axios akan otomatis mengatur header yang benar.
       await axios.put(
         `/api/vendor/product/${selectedProduct._id}/update`,
         formData,
@@ -151,49 +159,43 @@ const AllProductPage = () => {
       );
 
       toast.success("Product updated successfully!");
-      fetchProducts(); // Muat ulang daftar produk
-      setIsEditDialogOpen(false); // Tutup modal
+      fetchFilteredProducts();
+      setIsEditDialogOpen(false);
     } catch (error) {
       console.error("Error updating product:", error);
       const errorData = error.response?.data;
 
-      // Tampilkan error validasi dari server ke field yang sesuai
+      // Handle jika ada error validasi dari server
       if (errorData && errorData.errors) {
         Object.entries(errorData.errors).forEach(([field, message]) => {
           form.setError(field, { type: "server", message });
         });
         toast.error("Validation failed. Please check the form.");
       } else {
-        // Tampilkan error umum
         setErrors([
           errorData?.message || "Failed to update product. Please try again.",
         ]);
       }
     } finally {
-      setIsSubmitting(false); // Pastikan tombol submit aktif kembali
+      setIsSubmitting(false);
     }
   };
 
   const handleViewProduct = (product) => {
-    const slug = createSlug(product.name);
-    // Store product data in sessionStorage untuk diakses di detail page
-    sessionStorage.setItem("currentProduct", JSON.stringify(product));
-    // Navigate ke detail page dengan slug
-    navigate(`/store/products/details/${slug}`);
+    const identifier = product.slug || product._id;
+    navigate(`/store/products/details/${identifier}`);
   };
 
   const handleDeleteProduct = async (productId) => {
     try {
       setLoading(true);
-      // Add your delete API call here
-      console.log("Deleting product:", productId);
-      // await axios.delete(`/api/vendor/products/${productId}`, { withCredentials: true });
 
-      // For now, just show success message
-      alert("Product deleted successfully!");
+      await axios.delete(`/api/vendor/product/${productId}/delete`, {
+        withCredentials: true,
+      });
 
-      // Refresh the products list or remove from state
-      // setProducts(products.filter(p => p._id !== productId));
+      toast.success("Product deleted successfully.");
+      fetchFilteredProducts();
     } catch (error) {
       console.error("Failed to delete product:", error);
       alert("Failed to delete product. Please try again.");
@@ -227,7 +229,11 @@ const AllProductPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <FilterSearch />
+                  <FilterSearch
+                    categories={categories}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                  />
                   <ProductTable
                     currentProducts={currentProducts}
                     handleEditClick={handleEditClick}

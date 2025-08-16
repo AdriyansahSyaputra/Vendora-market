@@ -19,16 +19,8 @@ import Timestamps from "@/components/Layouts/vendor/Product/product-detail/Times
 import QuickActions from "@/components/Layouts/vendor/Product/product-detail/QuickActions";
 import PerformanceMetrics from "@/components/Layouts/vendor/Product/product-detail/PerformanceMetrics";
 import InventoryAlert from "@/components/Layouts/vendor/Product/product-detail/InventoryAlert";
-
-// Utility function to create slug from product name
-const createSlug = (name) => {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim("-");
-};
+import axios from "axios";
+import { toast } from "sonner";
 
 // Utility functions
 const formatCurrency = (amount) => {
@@ -123,43 +115,31 @@ const ProductDetailPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductBySlug = async () => {
       try {
         setLoading(true);
-
-        // Coba ambil dari sessionStorage terlebih dahulu
-        const storedProduct = sessionStorage.getItem("currentProduct");
-
-        if (storedProduct) {
-          const productData = JSON.parse(storedProduct);
-          const productSlug = createSlug(productData.name);
-
-          // Cek apakah slug sesuai
-          if (productSlug === slug) {
-            setProduct(productData);
-            setLoading(false);
-            return;
+        const response = await axios.get(
+          `/api/vendor/product/details/${slug}`,
+          {
+            withCredentials: true,
           }
-        }
-
-        // Jika tidak ada di sessionStorage atau slug tidak sesuai,
-        // redirect kembali ke halaman products
-        console.warn("Product not found or invalid slug");
-        navigate("/vendor/products", { replace: true });
+        );
+        setProduct(response.data);
       } catch (error) {
-        console.error("Error loading product:", error);
-        navigate("/vendor/products", { replace: true });
+        console.error("Failed to fetch product:", error);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
-  }, [slug, navigate]);
+    // Pastikan slug ada sebelum mencoba mengambil data
+    if (slug) {
+      fetchProductBySlug();
+    }
+  }, [slug]);
 
   const handleBack = () => {
-    // Clear stored product data
-    sessionStorage.removeItem("currentProduct");
     navigate(-1);
   };
 
@@ -167,25 +147,20 @@ const ProductDetailPage = () => {
     // Untuk sementara redirect ke halaman products
     // Nanti bisa diintegrasikan dengan edit modal atau halaman edit terpisah
     alert("Edit functionality - akan diintegrasikan dengan EditProductModal");
-    navigate("/vendor/products");
+    navigate("/store/products");
+    
   };
 
   const handleDelete = async () => {
     try {
-      // Add delete API call here
-      console.log("Deleting product:", product._id);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      alert("Product deleted successfully!");
-
-      // Clear stored data and navigate back
-      sessionStorage.removeItem("currentProduct");
-      navigate("/vendor/products");
+      // Panggil API delete Anda di sini
+      await axios.delete(`/api/vendor/product/${product._id}/delete`, {
+        withCredentials: true,
+      });
+      toast.success("Product deleted successfully!");
+      navigate("/store/products"); // Langsung navigasi
     } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+      // ...
     }
   };
 

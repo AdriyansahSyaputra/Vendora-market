@@ -16,7 +16,9 @@ import { productSchema } from "../validators/productValidator.js";
 import {
   createProduct,
   updateProduct,
-  getProductsByStore,
+  getAllProductsByStore,
+  deleteProduct,
+  getProductDetails,
 } from "../controllers/productController.js";
 import { parseJsonFields } from "../middlewares/parseFormDataMiddleware.js";
 import {
@@ -98,7 +100,21 @@ router.put(
   updateProduct
 );
 
-router.get("/products", authenticateUser, findUserStore, getProductsByStore);
+router.delete(
+  "/product/:id/delete",
+  authenticateUser,
+  findUserStore,
+  deleteProduct
+);
+
+router.get(
+  "/product/details/:slug",
+  authenticateUser,
+  findUserStore,
+  getProductDetails
+);
+
+router.get("/products", authenticateUser, findUserStore, getAllProductsByStore);
 // Route product end
 
 export default router;
