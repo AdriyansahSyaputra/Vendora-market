@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ import { CalendarIcon } from "lucide-react";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -42,22 +41,22 @@ const CouponFormModal = ({
   onOpenChange,
   onSubmit,
   initialData = null,
+  categories = [],
 }) => {
   const isEditing = Boolean(initialData);
-  const [startDateOpen, setStartDateOpen] = useState(false);
-  const [endDateOpen, setEndDateOpen] = useState(false);
 
   const form = useForm({
     defaultValues: initialData || {
       name: "",
       code: "",
       description: "",
+      category: "",
       discountType: "percentage",
-      discountValue: 10,
+      discountValue: 0,
       minPurchaseAmount: 0,
       startDate: new Date(),
       endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-      usageLimit: 100,
+      usageLimit: 0,
     },
   });
 
@@ -69,12 +68,13 @@ const CouponFormModal = ({
         name: "",
         code: "",
         description: "",
+        category: "",
         discountType: "percentage",
-        discountValue: 10,
-        minPurchaseAmount: 50000,
+        discountValue: 0,
+        minPurchaseAmount: 0,
         startDate: new Date(),
         endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-        usageLimit: 100,
+        usageLimit: 0,
       };
       form.reset(
         initialData
@@ -86,7 +86,7 @@ const CouponFormModal = ({
           : defaultValues
       );
     }
-  }, [initialData, isOpen, form]);
+  }, [initialData, isOpen, form, categories]);
 
   const handleFormSubmit = (values) => {
     onSubmit(values);
@@ -157,6 +157,35 @@ const CouponFormModal = ({
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Categories */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category._id} value={category._id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -270,10 +299,8 @@ const CouponFormModal = ({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Start Date</FormLabel>
-                    <Popover
-                      open={startDateOpen}
-                      onOpenChange={setStartDateOpen}
-                    >
+                    <Popover>
+                      {" "}
                       <PopoverTrigger asChild>
                         <Button
                           type="button"
@@ -282,10 +309,6 @@ const CouponFormModal = ({
                             "pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
-                          onClick={() => {
-                            console.log("Start date button clicked");
-                            setStartDateOpen(true);
-                          }}
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -295,19 +318,11 @@ const CouponFormModal = ({
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent
-                        className="w-auto p-0"
-                        align="start"
-                        style={{ zIndex: 9999 }}
-                        container={document.body}
-                      >
+                      <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            setStartDateOpen(false);
-                          }}
+                          onSelect={field.onChange}
                           initialFocus
                         />
                       </PopoverContent>
@@ -323,7 +338,7 @@ const CouponFormModal = ({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>End Date</FormLabel>
-                    <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                    <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           type="button"
@@ -332,10 +347,6 @@ const CouponFormModal = ({
                             "pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
-                          onClick={() => {
-                            console.log("End date button clicked");
-                            setEndDateOpen(true);
-                          }}
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -354,10 +365,7 @@ const CouponFormModal = ({
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            setEndDateOpen(false);
-                          }}
+                          onSelect={field.onChange}
                           initialFocus
                         />
                       </PopoverContent>

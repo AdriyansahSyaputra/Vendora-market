@@ -1,4 +1,14 @@
 import { z } from "zod";
+import mongoose from "mongoose";
+
+const objectIdSchema = z.string().refine(
+  (val) => {
+    return mongoose.Types.ObjectId.isValid(val);
+  },
+  {
+    message: "Category is required",
+  }
+);
 
 export const createVoucherSchema = z
   .object({
@@ -22,6 +32,8 @@ export const createVoucherSchema = z
         required_error: "Description is required.",
       })
       .min(10, { message: "Description must be at least 10 characters long." }),
+
+    category: objectIdSchema,
 
     discountType: z.enum(["percentage", "fixed_amount"], {
       required_error:

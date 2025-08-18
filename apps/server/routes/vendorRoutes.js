@@ -25,10 +25,18 @@ import {
   createUploadMiddleware,
   validateFileCount,
 } from "../middlewares/uploadMiddleware.js";
+import { createVoucherSchema } from "../validators/voucherValidator.js";
+import {
+  createStoreVoucher,
+  updateStoreVoucher,
+  deleteStoreVoucher,
+  getAllStoreVouchers,
+} from "../controllers/voucherController.js";
 
 const router = express.Router();
 
 const productJsonFields = ["variations", "dimensions", "promos"];
+const voucherJsonFields = ["discountValue", "minPurchaseAmount", "usageLimit"];
 
 // Configurasi Multer untuk upload file
 const productUploadConfig = {
@@ -116,5 +124,39 @@ router.get(
 
 router.get("/products", authenticateUser, findUserStore, getAllProductsByStore);
 // Route product end
+
+// Route voucher start
+router.post(
+  "/voucher/store/create",
+  authenticateUser,
+  findUserStore,
+  parseJsonFields(voucherJsonFields),
+  validate(createVoucherSchema),
+  createStoreVoucher
+);
+
+router.put(
+  "/voucher/store/:id/update",
+  authenticateUser,
+  findUserStore,
+  parseJsonFields(voucherJsonFields),
+  validate(createVoucherSchema),
+  updateStoreVoucher
+);
+
+router.delete(
+  "/voucher/store/:id/delete",
+  authenticateUser,
+  findUserStore,
+  deleteStoreVoucher
+);
+
+router.get(
+  "/voucher/store",
+  authenticateUser,
+  findUserStore,
+  getAllStoreVouchers
+);
+// Route voucher end
 
 export default router;

@@ -19,6 +19,12 @@ const voucherSchema = new mongoose.Schema(
       required: [true, "Description is required."],
       trim: true,
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductCategory",
+      required: [true, "Category is required."],
+      index: true,
+    },
     ownerType: {
       type: String,
       required: true,
@@ -28,6 +34,11 @@ const voucherSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       refPath: "ownerType",
       required: true,
+    },
+    voucherType: {
+      type: String,
+      required: true,
+      enum: ["product_discount", "shipping_discount", "cashback"],
     },
     discountType: {
       type: String,
