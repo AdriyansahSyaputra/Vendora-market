@@ -22,7 +22,7 @@ const VoucherCard = ({ voucher, onEdit, onDelete }) => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => onEdit(voucher)}>
               Edit
-            </DropdownMenuItem>
+            </DropdownMenuItem> 
             <DropdownMenuItem
               onSelect={() => onDelete(voucher)}
               className="text-destructive"

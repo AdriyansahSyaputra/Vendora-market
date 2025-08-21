@@ -11,8 +11,18 @@ import {
 } from "@/components/ui/card";
 import VoucherCard from "@/components/Layouts/company/Advertisement/Voucher/VoucherCard";
 import AddEditVoucherModal from "@/components/Layouts/company/Advertisement/Voucher/AddEditVoucherModal";
-import ConfirmationDialog from "@/components/Layouts/company/Advertisement/Ads/ConfirmationDialog";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { PlusCircle } from "lucide-react";
 
 const initialVouchers = [
   {
@@ -52,36 +62,68 @@ const initialVouchers = [
     validUntil: "2025-07-11",
   },
 ];
-const voucherCategories = [
-  "Shipping",
-  "Electronics",
-  "Fashion",
-  "General",
-  "Food",
-  "Books",
+
+const voucherTypes = [
+  { value: "product_discount", label: "Product Discount" },
+  { value: "shipping_discount", label: "Shipping Discount" },
+  { value: "cashback", label: "Cashback" },
 ];
 
 const VoucherPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [vouchers, setVouchers] = useState(initialVouchers);
-  const [modalMode, setModalMode] = useState(null);
-  const [selectedVoucher, setSelectedVoucher] = useState(null);
-  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [editingVoucher, setEditingVoucher] = useState(null);
+  const [voucherToDelete, setVoucherToDelete] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleAddNew = () => {
+    setEditingVoucher(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (voucher) => {
+    setEditingVoucher(voucher);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteRequest = (voucher) => {
+    setVoucherToDelete(voucher);
+  };
 
   const handleSaveVoucher = (voucherData) => {
-    if (modalMode === "edit") {
+    let imageUrl = editingVoucher?.image; 
+    if (voucherData.image instanceof File) {
+      imageUrl = URL.createObjectURL(voucherData.image);
+      console.log("New image file to upload:", voucherData.image);
+    }
+
+    const finalVoucherData = { ...voucherData, image: imageUrl };
+
+    if (editingVoucher) {
+      console.log("Updating voucher:", {
+        ...finalVoucherData,
+        _id: editingVoucher._id,
+      });
       setVouchers(
-        vouchers.map((v) => (v.id === voucherData.id ? voucherData : v))
+        vouchers.map((v) =>
+          v._id === editingVoucher._id
+            ? { ...finalVoucherData, _id: editingVoucher._id }
+            : v
+        )
       );
     } else {
-      const newVoucher = { ...voucherData, id: Date.now() };
+      console.log("Creating new voucher:", finalVoucherData);
+      const newVoucher = { ...finalVoucherData, _id: Date.now().toString() };
       setVouchers([newVoucher, ...vouchers]);
     }
   };
-  const handleDeleteVoucher = () => {
-    setVouchers(vouchers.filter((v) => v.id !== selectedVoucher.id));
-    setDeleteConfirmOpen(false);
-    setSelectedVoucher(null);
+
+  const handleDeleteConfirm = () => {
+    if (!voucherToDelete) return;
+    console.log("Deleting voucher:", voucherToDelete._id);
+    setVouchers(vouchers.filter((v) => v._id !== voucherToDelete._id));
+    setVoucherToDelete(null);
   };
 
   return (
@@ -109,13 +151,8 @@ const VoucherPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-4 md:gap-8">
-                  <Button
-                    onClick={() => {
-                      setSelectedVoucher(null);
-                      setModalMode("add");
-                    }}
-                  >
-                    Add New Voucher
+                  <Button onClick={handleAddNew}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Voucher
                   </Button>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -123,14 +160,8 @@ const VoucherPage = () => {
                       <VoucherCard
                         key={voucher.id}
                         voucher={voucher}
-                        onEdit={() => {
-                          setSelectedVoucher(voucher);
-                          setModalMode("edit");
-                        }}
-                        onDelete={() => {
-                          setSelectedVoucher(voucher);
-                          setDeleteConfirmOpen(true);
-                        }}
+                        onEdit={() => handleEdit(voucher)}
+                        onDelete={() => handleDeleteRequest(voucher)}
                       />
                     ))}
                   </div>
@@ -141,19 +172,35 @@ const VoucherPage = () => {
         </div>
 
         <AddEditVoucherModal
-          isOpen={modalMode !== null}
-          onClose={() => setModalMode(null)}
-          onSave={handleSaveVoucher}
-          initialData={modalMode === "edit" ? selectedVoucher : null}
-          voucherCategories={voucherCategories}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSaveVoucher}
+          initialData={editingVoucher}
+          voucherTypes={voucherTypes}
         />
-        <ConfirmationDialog
-          open={isDeleteConfirmOpen}
-          onOpenChange={setDeleteConfirmOpen}
-          onConfirm={handleDeleteVoucher}
-          title="Are you sure?"
-          description={`This will permanently delete the "${selectedVoucher?.name}" voucher. This action cannot be undone.`}
-        />
+
+        <AlertDialog
+          open={!!voucherToDelete}
+          onOpenChange={() => setVoucherToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the "{voucherToDelete?.name}"
+                voucher. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setVoucherToDelete(null)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </>
   );
