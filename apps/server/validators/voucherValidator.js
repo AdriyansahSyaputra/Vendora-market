@@ -12,6 +12,9 @@ const objectIdSchema = z.string().refine(
 
 export const createVoucherSchema = z
   .object({
+    ownerType: z.enum(["Store", "Platform"], {
+      required_error: "Owner type ('Store' or 'Platform') is required.",
+    }),
     name: z
       .string({
         required_error: "Voucher name is required.",
@@ -33,7 +36,7 @@ export const createVoucherSchema = z
       })
       .min(10, { message: "Description must be at least 10 characters long." }),
 
-    category: objectIdSchema,
+    category: z.string().optional(),
 
     discountType: z.enum(["percentage", "fixed_amount"], {
       required_error:
@@ -89,4 +92,42 @@ export const createVoucherSchema = z
       message: "End date must be after the start date.",
       path: ["endDate"],
     }
-  );
+  )
+  .refine(
+    (data) => {
+      if (data.discountType === "percentage") {
+        return data.discountValue > 0 && data.discountValue <= 100;
+      }
+      return true;
+    },
+    {
+      message: "For percentage discounts, the value must be between 1 and 100.",
+      path: ["discountValue"],
+    }
+  )
+  .refine(
+    (data) => {
+      return data.endDate > data.startDate;
+    },
+    {
+      message: "End date must be after the start date.",
+      path: ["endDate"],
+    }
+  )
+  .superRefine((data, ctx) => {
+    if (data.ownerType === "Store") {
+      if (!data.category) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Category is required for seller vouchers.",
+          path: ["category"],
+        });
+      } else if (!mongoose.Types.ObjectId.isValid(data.category)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Invalid Category ID format.",
+          path: ["category"],
+        });
+      }
+    }
+  });

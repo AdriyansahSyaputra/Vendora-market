@@ -23,6 +23,9 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { PlusCircle } from "lucide-react";
+import axios from "axios";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 const initialVouchers = [
   {
@@ -91,31 +94,37 @@ const VoucherPage = () => {
     setVoucherToDelete(voucher);
   };
 
-  const handleSaveVoucher = (voucherData) => {
-    let imageUrl = editingVoucher?.image; 
-    if (voucherData.image instanceof File) {
-      imageUrl = URL.createObjectURL(voucherData.image);
-      console.log("New image file to upload:", voucherData.image);
-    }
+  const handleSaveVoucher = async (data) => {
+    const formData = new FormData();
 
-    const finalVoucherData = { ...voucherData, image: imageUrl };
+    Object.keys(data).forEach((key) => {
+      const value = data[key];
+
+      if (key === "image" && value instanceof File) {
+        formData.append("image", value);
+      } else if (value instanceof Date) {
+        formData.append(key, value.toISOString());
+      } else if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+
+    formData.append("ownerType", "Platform");
 
     if (editingVoucher) {
-      console.log("Updating voucher:", {
-        ...finalVoucherData,
-        _id: editingVoucher._id,
-      });
-      setVouchers(
-        vouchers.map((v) =>
-          v._id === editingVoucher._id
-            ? { ...finalVoucherData, _id: editingVoucher._id }
-            : v
-        )
-      );
+      console.log("Updating voucher...", editingVoucher._id);
     } else {
-      console.log("Creating new voucher:", finalVoucherData);
-      const newVoucher = { ...finalVoucherData, _id: Date.now().toString() };
-      setVouchers([newVoucher, ...vouchers]);
+      try {
+        await axios.post("/api/company/voucher/platform/create", formData, {
+          withCredentials: true,
+        });
+        toast.success("Voucher created successfully!");
+      } catch (error) {
+        console.error("Error creating voucher:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to create voucher.";
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -129,6 +138,8 @@ const VoucherPage = () => {
   return (
     <>
       <Helmet title="All Product" />
+
+      <Toaster richColors position="top-center" />
 
       <div className="flex min-h-screen max-w-full bg-muted/40">
         {/* Sidebar Desktop */}

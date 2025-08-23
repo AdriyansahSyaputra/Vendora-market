@@ -22,7 +22,6 @@ const voucherSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProductCategory",
-      required: [true, "Category is required."],
       index: true,
     },
     ownerType: {

@@ -42,10 +42,10 @@ const AddEditVoucherModal = ({
   onSubmit,
   initialData,
   voucherTypes,
-  isSubmitting = false,
 }) => {
   const isEditing = Boolean(initialData);
   const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const form = useForm({
     defaultValues: {
@@ -54,9 +54,9 @@ const AddEditVoucherModal = ({
       description: "",
       voucherType: "product_discount",
       discountType: "percentage",
-      discountValue: 10,
+      discountValue: 0,
       minPurchaseAmount: 0,
-      usageLimit: 100,
+      usageLimit: 0,
       startDate: new Date(),
       endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
       image: null,
@@ -65,29 +65,21 @@ const AddEditVoucherModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (isEditing && initialData) {
-        const startDate = initialData.startDate
-          ? new Date(initialData.startDate)
-          : new Date();
-        const endDate = initialData.endDate
-          ? new Date(initialData.endDate)
-          : new Date(new Date().setDate(new Date().getDate() + 30));
-
+      if (initialData) {
         form.reset({
           name: initialData.name || "",
           code: initialData.code || "",
           description: initialData.description || "",
           voucherType: initialData.voucherType || "product_discount",
           discountType: initialData.discountType || "percentage",
-          discountValue: Number(initialData.discountValue) || 10,
-          minPurchaseAmount: Number(initialData.minPurchaseAmount) || 0,
-          usageLimit: Number(initialData.usageLimit) || 100,
-          startDate,
-          endDate,
-          image: initialData.image || initialData.imageUrl || null,
+          discountValue: initialData.discountValue || 0,
+          minPurchaseAmount: initialData.minPurchaseAmount || 0,
+          usageLimit: initialData.usageLimit || 0,
+          startDate: new Date(initialData.startDate),
+          endDate: new Date(initialData.endDate),
         });
-
-        setImagePreview(initialData.image || initialData.imageUrl || null);
+        setImagePreview(initialData.image || null);
+        setSelectedFile(null);
       } else {
         form.reset({
           name: "",
@@ -100,31 +92,33 @@ const AddEditVoucherModal = ({
           usageLimit: 100,
           startDate: new Date(),
           endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-          image: null,
         });
         setImagePreview(null);
+        setSelectedFile(null);
       }
     }
-  }, [isOpen, isEditing, initialData, form]);
+  }, [initialData, isOpen, form]);
 
   const handleFormSubmit = (data) => {
-    const formattedData = {
+    const submitData = {
       ...data,
-      startDate: format(data.startDate, "yyyy-MM-dd"),
-      endDate: format(data.endDate, "yyyy-MM-dd"),
-      discountValue: Number(data.discountValue),
-      minPurchaseAmount: Number(data.minPurchaseAmount),
-      usageLimit: Number(data.usageLimit),
+      image: selectedFile,
     };
-
-    onSubmit(formattedData);
+    onSubmit(submitData);
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      form.reset();
-      setImagePreview(null);
-      onClose();
+    form.reset();
+    setImagePreview(null);
+    setSelectedFile(null);
+    onClose();
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -174,13 +168,7 @@ const AddEditVoucherModal = ({
                           type="file"
                           accept="image/*"
                           className="flex-1"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              field.onChange(file);
-                              setImagePreview(URL.createObjectURL(file));
-                            }
-                          }}
+                          onChange={handleImageChange}
                         />
                       </FormControl>
                     </div>
@@ -194,7 +182,6 @@ const AddEditVoucherModal = ({
                 <FormField
                   name="name"
                   control={form.control}
-                  rules={{ required: "Name is required" }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Name *</FormLabel>
@@ -209,7 +196,6 @@ const AddEditVoucherModal = ({
                 <FormField
                   name="code"
                   control={form.control}
-                  rules={{ required: "Code is required" }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Code *</FormLabel>
@@ -306,10 +292,6 @@ const AddEditVoucherModal = ({
                 <FormField
                   name="discountValue"
                   control={form.control}
-                  rules={{
-                    required: "Discount value is required",
-                    min: { value: 1, message: "Value must be greater than 0" },
-                  }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Discount Value *</FormLabel>
@@ -317,14 +299,12 @@ const AddEditVoucherModal = ({
                         <FormControl>
                           <Input
                             type="number"
+                            placeholder="e.g. 15"
                             min="1"
                             step={discountType === "percentage" ? "1" : "1000"}
                             {...field}
                             className={
                               discountType === "fixed_amount" ? "pl-8" : "pr-8"
-                            }
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
                             }
                           />
                         </FormControl>
@@ -361,9 +341,6 @@ const AddEditVoucherModal = ({
                             placeholder="e.g. 50000"
                             {...field}
                             className="pl-8"
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
                           />
                         </FormControl>
                         <div className="absolute inset-y-0 left-3 flex items-center text-muted-foreground text-sm">
@@ -378,10 +355,6 @@ const AddEditVoucherModal = ({
                 <FormField
                   control={form.control}
                   name="usageLimit"
-                  rules={{
-                    required: "Usage limit is required",
-                    min: { value: 1, message: "Must be at least 1" },
-                  }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Usage Limit *</FormLabel>
@@ -391,9 +364,6 @@ const AddEditVoucherModal = ({
                           min="1"
                           placeholder="e.g. 100"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -407,37 +377,33 @@ const AddEditVoucherModal = ({
                 <FormField
                   control={form.control}
                   name="startDate"
-                  rules={{ required: "Start date is required" }}
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Start Date *</FormLabel>
+                      <FormLabel>Start Date</FormLabel>
                       <Popover>
+                        {" "}
                         <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
+                          <Button
+                            type="button"
+                            variant={"outline"}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -450,38 +416,37 @@ const AddEditVoucherModal = ({
                 <FormField
                   control={form.control}
                   name="endDate"
-                  rules={{ required: "End date is required" }}
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>End Date *</FormLabel>
+                      <FormLabel>End Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
+                          <Button
+                            type="button"
+                            variant={"outline"}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent
+                          className="w-auto p-0"
+                          align="start"
+                          style={{ zIndex: 9999 }}
+                          container={document.body}
+                        >
                           <Calendar
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) => {
-                              const startDate = form.getValues("startDate");
-                              return date < startDate;
-                            }}
                             initialFocus
                           />
                         </PopoverContent>
@@ -498,12 +463,12 @@ const AddEditVoucherModal = ({
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                disabled={isSubmitting}
+                disabled={form.formState.isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting
                   ? isEditing
                     ? "Updating..."
                     : "Creating..."

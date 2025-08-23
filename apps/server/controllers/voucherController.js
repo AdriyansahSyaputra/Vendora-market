@@ -1,4 +1,8 @@
 import Voucher from "../models/vouchersModel.js";
+import {
+  uploadFilesToCloudinary,
+  deleteFilesFromCloudinary,
+} from "../utils/cloudinaryUtils.js";
 
 const getStartOfDay = (date) => {
   const newDate = new Date(date);
@@ -42,8 +46,8 @@ export const createStoreVoucher = async (req, res) => {
       ownerType: "Store",
       ownerId: storeId,
       isActive: initialIsActive,
-      voucherType: "product_discount"
-    };    
+      voucherType: "product_discount",
+    };
 
     const voucher = await Voucher.create(newVoucher);
 
@@ -242,6 +246,10 @@ export const createPlatformVoucher = async (req, res) => {
         .json({ message: "Access denied. Admin ID not found" });
     }
 
+    if (!req.files) {
+      return res.status(400).json({ message: "No files uploaded." });
+    }
+
     const existingVoucher = await Voucher.findOne({
       code: validatedData.code,
     });
@@ -252,6 +260,13 @@ export const createPlatformVoucher = async (req, res) => {
       });
     }
 
+    let imageUrl = null;
+
+    if (req.file) {
+      const uploadFolder = `vouchers/platform/${adminId}`;
+      imageUrl = await uploadFilesToCloudinary(req.file, uploadFolder);
+    }
+
     const today = getStartOfDay(new Date());
     const startDate = getStartOfDay(new Date(validatedData.startDate));
     const endDate = new Date(validatedData.endDate);
@@ -260,6 +275,7 @@ export const createPlatformVoucher = async (req, res) => {
 
     const newVoucher = {
       ...validatedData,
+      image: imageUrl,
       ownerType: "Platform",
       ownerId: adminId,
       isActive: initialIsActive,
