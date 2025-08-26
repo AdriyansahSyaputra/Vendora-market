@@ -231,7 +231,7 @@ export const getAllStoreVouchers = async (req, res) => {
 
 /**
  * @desc Create a new platform voucher
- * @route POST /api/vendor/voucher/platform/create
+ * @route POST /api/company/voucher/platform/create
  * @access Private/Admin
  */
 export const createPlatformVoucher = async (req, res) => {
@@ -246,7 +246,7 @@ export const createPlatformVoucher = async (req, res) => {
         .json({ message: "Access denied. Admin ID not found" });
     }
 
-    if (!req.files) {
+    if (!req.file) {
       return res.status(400).json({ message: "No files uploaded." });
     }
 
@@ -263,8 +263,12 @@ export const createPlatformVoucher = async (req, res) => {
     let imageUrl = null;
 
     if (req.file) {
-      const uploadFolder = `vouchers/platform/${adminId}`;
-      imageUrl = await uploadFilesToCloudinary(req.file, uploadFolder);
+      const uploadFolder = `vouchers/platform/${adminId._id.toString()}`;
+      const imageUrls = await uploadFilesToCloudinary(req.file, uploadFolder);
+
+      if (imageUrls && imageUrls.length > 0) {
+        imageUrl = imageUrls[0];
+      }
     }
 
     const today = getStartOfDay(new Date());
@@ -292,6 +296,138 @@ export const createPlatformVoucher = async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({ message: "Voucher code already exists." });
     }
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+/**
+ * @desc Edit Voucher for a platform
+ * @route PUT /api/company/voucher/platform/:id/update
+ * @access Private/Admin
+ */
+export const updatePlatformVoucher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const validatedData = req.body;
+    const admin = req.adminId;
+
+    if (!admin || !admin._id) {
+      return res
+        .status(401)
+        .json({ message: "Access denied. Admin not found" });
+    }
+
+    const existingVoucher = await Voucher.findById(id);
+    if (!existingVoucher) {
+      return res.status(404).json({ message: "Voucher not found." });
+    }
+
+    let imageUrl = existingVoucher.image;
+
+    if (req.file) {
+      if (existingVoucher.image) {
+        await deleteFilesFromCloudinary(existingVoucher.image);
+      }
+
+      const uploadFolder = `vouchers/platform/${admin._id.toString()}`;
+      const newImageUrls = await uploadFilesToCloudinary(
+        req.file,
+        uploadFolder
+      );
+      if (newImageUrls && newImageUrls.length > 0) {
+        imageUrl = newImageUrls[0];
+      }
+    }
+
+    const today = getStartOfDay(new Date());
+    const startDate = getStartOfDay(new Date(validatedData.startDate));
+    const endDate = new Date(validatedData.endDate);
+    const newIsActive = startDate <= today && today <= endDate;
+
+    const updatedVoucherData = {
+      ...validatedData,
+      image: imageUrl,
+      isActive: newIsActive,
+    };
+
+    const updatedVoucher = await Voucher.findByIdAndUpdate(
+      id,
+      updatedVoucherData,
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json({
+      message: "Voucher updated successfully.",
+      data: updatedVoucher,
+    });
+  } catch (error) {
+    console.error("Error updating platform voucher:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+/**
+ * @desc Delete a voucher for a platform
+ * @route DELETE /api/company/voucher/platform/:id/delete
+ * @access Private/Admin
+ */
+export const deletePlatformVoucher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const admin = req.adminId;
+
+    if (!admin || !admin._id) {
+      return res
+        .status(401)
+        .json({ message: "Access denied. Admin not found" });
+    }
+
+    const existingVoucher = await Voucher.findById(id);
+    if (!existingVoucher) {
+      return res.status(404).json({ message: "Voucher not found." });
+    }
+
+    if (existingVoucher.image) {
+      await deleteFilesFromCloudinary(existingVoucher.image);
+    }
+
+    await Voucher.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "Voucher deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting platform voucher:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+/**
+ * @desc Get all vouchers for a platform
+ * @route GET /api/company/voucher/platform
+ * @access Private/Admin
+ */
+export const getAllPlatformVouchers = async (req, res) => {
+  try {
+    const admin = req.adminId;
+
+    if (!admin || !admin._id) {
+      return res
+        .status(401)
+        .json({ message: "Access denied. Admin not found" });
+    }
+
+    const vouchers = await Voucher.find({ ownerType: "Platform" }).sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({ vouchers });
+  } catch (error) {
+    console.error("Error getting all platform vouchers:", error);
     res
       .status(500)
       .json({ message: "Internal Server Error", error: error.message });

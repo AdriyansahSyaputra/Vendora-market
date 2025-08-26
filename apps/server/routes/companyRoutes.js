@@ -12,7 +12,12 @@ import {
   validateFileCount,
 } from "../middlewares/uploadMiddleware.js";
 import { createVoucherSchema } from "../validators/voucherValidator.js";
-import { createPlatformVoucher } from "../controllers/voucherController.js";
+import {
+  createPlatformVoucher,
+  updatePlatformVoucher,
+  deletePlatformVoucher,
+  getAllPlatformVouchers,
+} from "../controllers/voucherController.js";
 
 const router = express.Router();
 
@@ -40,6 +45,7 @@ router.put(
 
 router.get("/seller-applications", authenticateUser, getAllSellerApplications);
 
+// Route voucher start
 router.post(
   "/voucher/platform/create",
   authenticateUser,
@@ -50,5 +56,31 @@ router.post(
   validate(createVoucherSchema),
   createPlatformVoucher
 );
+
+router.put(
+  "/voucher/platform/:id/update",
+  authenticateUser,
+  findAdminPlatform,
+  uploadProductImages,
+  validateProductImageCount,
+  parseJsonFields(voucherJsonFields),
+  validate(createVoucherSchema),
+  updatePlatformVoucher
+);
+
+router.delete(
+  "/voucher/platform/:id/delete",
+  authenticateUser,
+  findAdminPlatform,
+  deletePlatformVoucher
+);
+
+router.get(
+  "/voucher/platform",
+  authenticateUser,
+  findAdminPlatform,
+  getAllPlatformVouchers
+);
+// Route voucher end
 
 export default router;

@@ -1,28 +1,43 @@
 import cloudinary from "../config/cloudinaryConfig.js";
 
 /**
- * Meng-upload array file (dari multer) ke Cloudinary.
- * Fungsi ini dirancang untuk menjadi generik dan dapat digunakan kembali.
- * @param {Array<object>} files - Array file dari `req.files` (disediakan oleh multer).
- * @param {string} folder - Nama folder di Cloudinary untuk menyimpan gambar (e.g., 'products/store123', 'avatars/users').
- * @returns {Promise<Array<string>>} Array URL dari gambar yang di-upload.
+ * Mengunggah satu atau beberapa file ke Cloudinary secara aman.
+ * Fungsi ini secara cerdas menangani input berupa satu objek file atau array objek file.
+ *
+ * @param {object|object[]} filesOrFile - Satu objek file (dari req.file) atau array objek file (dari req.files).
+ * @param {string} folder - Nama folder di Cloudinary tempat menyimpan file.
+ * @returns {Promise<string[]>} Sebuah promise yang menghasilkan array berisi URL aman dari file yang diunggah.
  */
-export const uploadFilesToCloudinary = async (files, folder) => {
-  if (!files || files.length === 0) return [];
+export const uploadFilesToCloudinary = async (filesOrFile, folder) => {
+  if (!filesOrFile) return [];
 
-  const uploadPromises = files.map((file) => {
+  const filesToUpload = Array.isArray(filesOrFile)
+    ? filesOrFile
+    : [filesOrFile];
+  if (filesToUpload.length === 0) return [];
+
+  const uploadPromises = filesToUpload.map((file) => {
     return new Promise((resolve, reject) => {
-      // Menggunakan 'upload_stream' untuk meng-upload buffer secara langsung
+      if (!file || !file.buffer) {
+        return reject(new Error("File or file buffer is missing."));
+      }
+
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: folder },
         (error, result) => {
           if (error) {
-            return reject(error);
+            console.error("Cloudinary API Error:", error);
+            return reject(
+              new Error(`Cloudinary upload failed: ${error.message}`)
+            );
           }
-          resolve(result.secure_url);
+          if (result) {
+            resolve(result.secure_url);
+          } else {
+            reject(new Error("Cloudinary upload result is undefined."));
+          }
         }
       );
-      // Mengirim buffer file ke stream
       uploadStream.end(file.buffer);
     });
   });
@@ -31,32 +46,34 @@ export const uploadFilesToCloudinary = async (files, folder) => {
     const imageUrls = await Promise.all(uploadPromises);
     return imageUrls;
   } catch (error) {
-    console.error("Cloudinary upload failed:", error);
-    throw new Error("Failed to upload images to Cloudinary.");
+    console.error("A promise failed during Cloudinary upload:", error);
+    throw new Error(error.message || "Failed to upload files to Cloudinary.");
   }
 };
 
 /**
- * Menghapus beberapa gambar dari Cloudinary berdasarkan URL-nya.
- * @param {Array<string>} imageUrls - Array URL gambar yang akan dihapus.
+ * Menghapus satu atau beberapa gambar dari Cloudinary berdasarkan URL-nya.
+ * @param {string|string[]} imageUrls - Satu URL atau array URL gambar yang akan dihapus.
  */
 export const deleteFilesFromCloudinary = async (imageUrls) => {
   if (!imageUrls || imageUrls.length === 0) return;
 
-  // Ekstrak public_id dari setiap URL
-  const publicIds = imageUrls
+  const urlsToDelete = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+
+  const publicIds = urlsToDelete
     .map((url) => {
       try {
-        // Pola ini lebih kuat untuk mengekstrak public_id
         const regex = /\/upload\/(?:v\d+\/)?(.+?)(?:\.\w+)?$/;
         const match = url.match(regex);
         return match ? match[1] : null;
       } catch (e) {
-        console.error(`Invalid Cloudinary URL: ${url}`);
+        console.error(
+          `Invalid Cloudinary URL, cannot extract public_id: ${url}`
+        );
         return null;
       }
     })
-    .filter(Boolean); // Hapus nilai null dari array
+    .filter(Boolean);
 
   if (publicIds.length === 0) return;
 
@@ -64,7 +81,5 @@ export const deleteFilesFromCloudinary = async (imageUrls) => {
     await cloudinary.api.delete_resources(publicIds);
   } catch (error) {
     console.error("Cloudinary deletion failed:", error);
-    // Jangan melempar error di sini agar proses update bisa lanjut
-    // Cukup log error-nya
   }
 };

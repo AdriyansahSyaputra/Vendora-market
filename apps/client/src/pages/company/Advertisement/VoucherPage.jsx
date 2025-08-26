@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/Templates/company/sidebar/Sidebar";
 import Topbar from "@/components/Templates/company/topbar/Topbar";
 import { Helmet } from "react-helmet-async";
@@ -22,49 +22,10 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import axios from "axios";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-
-const initialVouchers = [
-  {
-    id: 1,
-    name: "Free Shipping",
-    imageUrl: "https://placehold.co/100x100/0ea5e9/ffffff?text=FREE",
-    category: "Shipping",
-    discount: "100%",
-    validFrom: "2025-07-01",
-    validUntil: "2025-07-31",
-  },
-  {
-    id: 2,
-    name: "10% Off Electronics",
-    imageUrl: "https://placehold.co/100x100/f97316/ffffff?text=10%25",
-    category: "Electronics",
-    discount: "10%",
-    validFrom: "2025-07-05",
-    validUntil: "2025-07-15",
-  },
-  {
-    id: 3,
-    name: "New User Bonus",
-    imageUrl: "https://placehold.co/100x100/84cc16/ffffff?text=NEW",
-    category: "General",
-    discount: "$5",
-    validFrom: "2025-01-01",
-    validUntil: "2025-12-31",
-  },
-  {
-    id: 4,
-    name: "Fashion Friday",
-    imageUrl: "https://placehold.co/100x100/db2777/ffffff?text=FF",
-    category: "Fashion",
-    discount: "15%",
-    validFrom: "2025-07-11",
-    validUntil: "2025-07-11",
-  },
-];
 
 const voucherTypes = [
   { value: "product_discount", label: "Product Discount" },
@@ -74,7 +35,7 @@ const voucherTypes = [
 
 const VoucherPage = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [vouchers, setVouchers] = useState(initialVouchers);
+  const [vouchers, setVouchers] = useState([]);
   const [editingVoucher, setEditingVoucher] = useState(null);
   const [voucherToDelete, setVoucherToDelete] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,31 +55,71 @@ const VoucherPage = () => {
     setVoucherToDelete(voucher);
   };
 
+  const fetchVouchers = async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await axios.get("/api/company/voucher/platform", {
+        withCredentials: true,
+      });
+      setVouchers(data.vouchers || []);
+    } catch (error) {
+      console.error("Error fetching vouchers:", error);
+      toast.error("Failed to load vouchers. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
+
   const handleSaveVoucher = async (data) => {
     const formData = new FormData();
 
     Object.keys(data).forEach((key) => {
       const value = data[key];
-
-      if (key === "image" && value instanceof File) {
-        formData.append("image", value);
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (value !== null && value !== undefined) {
-        formData.append(key, value);
+      if (key !== "image") {
+        if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (value !== null && value !== undefined) {
+          formData.append(key, value);
+        }
       }
     });
+
+    if (data.image instanceof File) {
+      formData.append("image", data.image);
+    } else if (editingVoucher && editingVoucher.image) {
+      formData.append("existingImages", JSON.stringify([editingVoucher.image]));
+    }
 
     formData.append("ownerType", "Platform");
 
     if (editingVoucher) {
-      console.log("Updating voucher...", editingVoucher._id);
+      try {
+        await axios.put(
+          `/api/company/voucher/platform/${editingVoucher._id}/update`,
+          formData,
+          {
+            withCredentials: true,
+          }
+        );
+        toast.success("Voucher updated successfully!");
+        fetchVouchers();
+      } catch (error) {
+        console.error("Error updating voucher:", error);
+        const errorMessage =
+          error.response?.data?.message || "Failed to update voucher.";
+        toast.error(errorMessage);
+      }
     } else {
       try {
         await axios.post("/api/company/voucher/platform/create", formData, {
           withCredentials: true,
         });
         toast.success("Voucher created successfully!");
+        fetchVouchers();
       } catch (error) {
         console.error("Error creating voucher:", error);
         const errorMessage =
@@ -128,11 +129,22 @@ const VoucherPage = () => {
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!voucherToDelete) return;
-    console.log("Deleting voucher:", voucherToDelete._id);
-    setVouchers(vouchers.filter((v) => v._id !== voucherToDelete._id));
-    setVoucherToDelete(null);
+    try {
+      await axios.delete(
+        `/api/company/voucher/platform/${voucherToDelete._id}/delete`,
+        { withCredentials: true }
+      );
+      toast.success("Voucher deleted successfully.");
+      fetchVouchers();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to delete voucher:", err);
+      toast.error("Failed to delete voucher.", {
+        description: err.response?.data?.message || "An error occurred.",
+      });
+    }
   };
 
   return (
@@ -166,15 +178,25 @@ const VoucherPage = () => {
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Voucher
                   </Button>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {vouchers.map((voucher) => (
-                      <VoucherCard
-                        key={voucher.id}
-                        voucher={voucher}
-                        onEdit={() => handleEdit(voucher)}
-                        onDelete={() => handleDeleteRequest(voucher)}
-                      />
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {isLoading ? (
+                      <div className="col-span-full flex justify-center items-center">
+                        <Loader2 className="animate-spin h-6 w-6 text-primary" />
+                      </div>
+                    ) : vouchers.length > 0 ? (
+                      vouchers.map((voucher) => (
+                        <VoucherCard
+                          key={voucher._id}
+                          voucher={voucher}
+                          onEdit={() => handleEdit(voucher)}
+                          onDelete={() => handleDeleteRequest(voucher)}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center text-muted-foreground">
+                        No vouchers found. Click "Add Voucher" to create one.
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

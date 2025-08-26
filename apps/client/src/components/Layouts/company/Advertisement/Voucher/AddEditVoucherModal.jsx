@@ -45,7 +45,6 @@ const AddEditVoucherModal = ({
 }) => {
   const isEditing = Boolean(initialData);
   const [imagePreview, setImagePreview] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
 
   const form = useForm({
     defaultValues: {
@@ -77,9 +76,9 @@ const AddEditVoucherModal = ({
           usageLimit: initialData.usageLimit || 0,
           startDate: new Date(initialData.startDate),
           endDate: new Date(initialData.endDate),
+          image: null,
         });
         setImagePreview(initialData.image || null);
-        setSelectedFile(null);
       } else {
         form.reset({
           name: "",
@@ -87,39 +86,27 @@ const AddEditVoucherModal = ({
           description: "",
           voucherType: "product_discount",
           discountType: "percentage",
-          discountValue: 10,
+          discountValue: 0,
           minPurchaseAmount: 0,
-          usageLimit: 100,
+          usageLimit: 0,
           startDate: new Date(),
           endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
+          image: null,
         });
         setImagePreview(null);
-        setSelectedFile(null);
       }
     }
   }, [initialData, isOpen, form]);
 
   const handleFormSubmit = (data) => {
-    const submitData = {
-      ...data,
-      image: selectedFile,
-    };
-    onSubmit(submitData);
+    onSubmit(data);
+    handleClose();
   };
 
   const handleClose = () => {
     form.reset();
     setImagePreview(null);
-    setSelectedFile(null);
     onClose();
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
   };
 
   const discountType = form.watch("discountType");
@@ -168,7 +155,13 @@ const AddEditVoucherModal = ({
                           type="file"
                           accept="image/*"
                           className="flex-1"
-                          onChange={handleImageChange}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              field.onChange(file);
+                              setImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
                         />
                       </FormControl>
                     </div>
@@ -300,7 +293,7 @@ const AddEditVoucherModal = ({
                           <Input
                             type="number"
                             placeholder="e.g. 15"
-                            min="1"
+                            min={discountType === "percentage" ? "1" : "0"}
                             step={discountType === "percentage" ? "1" : "1000"}
                             {...field}
                             className={
