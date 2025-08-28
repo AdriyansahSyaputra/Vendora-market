@@ -80,7 +80,7 @@ export const createVoucherSchema = z
     },
     {
       message: "For percentage discounts, the value must be between 1 and 100.",
-      path: ["discountValue"], // Specify which field the error belongs to
+      path: ["discountValue"],
     }
   )
   .refine(

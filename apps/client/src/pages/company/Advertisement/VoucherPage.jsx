@@ -74,9 +74,10 @@ const VoucherPage = () => {
     fetchVouchers();
   }, []);
 
-  const handleSaveVoucher = async (data) => {
+  const handleSaveVoucher = async (data, form) => {
+    const { setError } = form;
     const formData = new FormData();
-
+    // ... (logika pembuatan FormData tetap sama)
     Object.keys(data).forEach((key) => {
       const value = data[key];
       if (key !== "image") {
@@ -87,60 +88,108 @@ const VoucherPage = () => {
         }
       }
     });
-
     if (data.image instanceof File) {
       formData.append("image", data.image);
     } else if (editingVoucher && editingVoucher.image) {
       formData.append("existingImages", JSON.stringify([editingVoucher.image]));
     }
-
     formData.append("ownerType", "Platform");
 
+    // --- ALUR OPTIMISTIC ---
     if (editingVoucher) {
+      // 1. Simpan state lama untuk rollback
+      const previousVouchers = vouchers;
+
+      // 2. Buat data optimis dan update UI secara instan
+      const tempImageUrl =
+        data.image instanceof File
+          ? URL.createObjectURL(data.image)
+          : editingVoucher.image;
+      const optimisticVoucher = {
+        ...data,
+        _id: editingVoucher._id,
+        image: tempImageUrl,
+      };
+      setVouchers(
+        vouchers.map((v) =>
+          v._id === editingVoucher._id ? optimisticVoucher : v
+        )
+      );
+      setIsModalOpen(false);
+      toast.success("Voucher updated successfully!");
+
+      // 3. Lakukan panggilan API di latar belakang
       try {
-        await axios.put(
+        const response = await axios.put(
           `/api/company/voucher/platform/${editingVoucher._id}/update`,
           formData,
-          {
-            withCredentials: true,
-          }
+          { withCredentials: true }
         );
-        toast.success("Voucher updated successfully!");
-        fetchVouchers();
+        // 4. Sinkronisasi data asli dari server (halus, tanpa loading)
+        setVouchers((current) =>
+          current.map((v) =>
+            v._id === editingVoucher._id ? response.data.data : v
+          )
+        );
       } catch (error) {
-        console.error("Error updating voucher:", error);
-        const errorMessage =
-          error.response?.data?.message || "Failed to update voucher.";
-        toast.error(errorMessage);
+        console.error("Update failed, rolling back:", error);
+        // 5. Rollback jika gagal
+        setVouchers(previousVouchers);
+        handleApiError(error, setError, "update");
       }
     } else {
-      try {
-        await axios.post("/api/company/voucher/platform/create", formData, {
-          withCredentials: true,
-        });
-        toast.success("Voucher created successfully!");
-        fetchVouchers();
-      } catch (error) {
-        console.error("Error creating voucher:", error);
-        const errorMessage =
-          error.response?.data?.message || "Failed to create voucher.";
-        toast.error(errorMessage);
-      }
+      // Alur untuk Create
+      // Untuk create, kita tidak melakukan optimistic update agar bisa menangani validasi
+      // dari backend dengan lebih baik (misal: kode duplikat).
+      const promise = axios.post(
+        "/api/company/voucher/platform/create",
+        formData,
+        { withCredentials: true }
+      );
+
+      toast.promise(promise, {
+        loading: "Creating voucher...",
+        success: (response) => {
+          setVouchers((current) => [response.data.data, ...current]);
+          setIsModalOpen(false);
+          return "Voucher created successfully!";
+        },
+        error: (error) => handleApiError(error, setError, "create"),
+      });
     }
+  };
+
+  // Fungsi helper untuk menangani error API
+  const handleApiError = (error, setError, context) => {
+    const errors = error.response?.data?.errors;
+    if (errors) {
+      // Jika ada error validasi, buka kembali modal dan tampilkan pesan
+      if (context === "update") setIsModalOpen(true);
+      Object.keys(errors).forEach((key) => {
+        setError(key, { type: "manual", message: errors[key] });
+      });
+      return "Validation failed. Please check the form.";
+    }
+    return error.response?.data?.message || "An unexpected error occurred.";
   };
 
   const handleDeleteConfirm = async () => {
     if (!voucherToDelete) return;
+
+    const previousVouchers = vouchers;
+
+    setVouchers(vouchers.filter((v) => v._id !== voucherToDelete._id));
+    setVoucherToDelete(null);
+    toast.success("Voucher deleted successfully.");
+
     try {
       await axios.delete(
         `/api/company/voucher/platform/${voucherToDelete._id}/delete`,
         { withCredentials: true }
       );
-      toast.success("Voucher deleted successfully.");
-      fetchVouchers();
-      setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to delete voucher:", err);
+      setVouchers(previousVouchers);
       toast.error("Failed to delete voucher.", {
         description: err.response?.data?.message || "An error occurred.",
       });
@@ -207,7 +256,7 @@ const VoucherPage = () => {
         <AddEditVoucherModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSubmit={handleSaveVoucher}
+          onSubmit={(data, form) => handleSaveVoucher(data, form.setError)}
           initialData={editingVoucher}
           voucherTypes={voucherTypes}
         />

@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import vendorRoutes from "./routes/vendorRoutes.js";
+import { handleMulterError } from "./middlewares/multerErrorMiddleware.js";
 
 const app = express();
 
@@ -35,6 +36,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/client", clientRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/vendor", vendorRoutes);
+
+// Middleware untuk menangani error Multer
+app.use(handleMulterError);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

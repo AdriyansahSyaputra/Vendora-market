@@ -99,8 +99,7 @@ const AddEditVoucherModal = ({
   }, [initialData, isOpen, form]);
 
   const handleFormSubmit = (data) => {
-    onSubmit(data);
-    handleClose();
+    onSubmit(data, form);
   };
 
   const handleClose = () => {

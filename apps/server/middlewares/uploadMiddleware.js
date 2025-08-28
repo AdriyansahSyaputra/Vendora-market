@@ -50,11 +50,16 @@ export const createUploadMiddleware = ({
     fileFilter,
   });
 
-  // Mengembalikan middleware yang sesuai, single() atau array()
-  if (maxCount === 1) {
-    return upload.single(fieldName);
-  }
-  return upload.array(fieldName, maxCount);
+  const multerMiddleware =
+    maxCount === 1
+      ? upload.single(fieldName)
+      : upload.array(fieldName, maxCount);
+
+  return (req, res, next) => {
+    req.uploadConfig = { maxSizeMB };
+
+    multerMiddleware(req, res, next);
+  };
 };
 
 /**
@@ -71,19 +76,19 @@ export const validateFileCount = ({ fieldName, minCount, message }) => {
   return (req, res, next) => {
     const newFiles = req.files || (req.file ? [req.file] : []);
 
-      let existingImageUrls = [];
-      if (req.body.existingImages) {
-        try {
-          const existing = JSON.parse(req.body.existingImages);
-          if (Array.isArray(existing)) {
-            existingImageUrls = existing.filter(
-              (item) => typeof item === "string"
-            );
-          }
-        } catch (e) {
-          // Abaikan jika parsing gagal
+    let existingImageUrls = [];
+    if (req.body.existingImages) {
+      try {
+        const existing = JSON.parse(req.body.existingImages);
+        if (Array.isArray(existing)) {
+          existingImageUrls = existing.filter(
+            (item) => typeof item === "string"
+          );
         }
+      } catch (e) {
+        // Abaikan jika parsing gagal
       }
+    }
 
     // 3. Hitung totalnya
     const totalCount = newFiles.length + existingImageUrls.length;
