@@ -38,6 +38,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import SellerRequestPage from "./pages/client/SellerRequestPage";
 import NotificationDetailPageDesktop from "./pages/client/NotificationDetailPageDesktop";
 import ProductDetailPage from "./pages/vendor/Product/ProductDetailPage";
+import ProductDetailPageClient from "./pages/client/ProductDetailPageClient";
 
 const App = () => {
   return (
@@ -57,6 +58,7 @@ const App = () => {
           path="/notifications/:id"
           element={<NotificationDetailPageDesktop />}
         />
+        <Route path="/product/detail" element={<ProductDetailPageClient />} />
 
         {/* ======================================================================= */}
         {/* Seller routes */}
