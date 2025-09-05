@@ -13,6 +13,8 @@ import ReviewsSection from "@/components/Layouts/client/ProductDetail/ReviewsSec
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import VariationSelector from "@/components/Layouts/client/ProductDetail/VariationSelector";
+import { Separator } from "@/components/ui/separator";
 
 const mockProduct = {
   name: "Pro-Level Wireless Over-Ear Headphones",
@@ -130,9 +132,31 @@ const ProductDetailPageClient = () => {
   const location = useLocation();
   const currentPage = location.pathname;
   const [isSearching, setIsSearching] = useState(false);
-  const canSearch = currentPage === "/trending";
+  const canSearch = currentPage === "/detail-product";
 
   const product = mockProduct;
+
+  const [selectedVariation, setSelectedVariation] = useState({
+    color: null,
+    size: null,
+  });
+
+  const isAddToCartDisabled =
+    !selectedVariation.color || !selectedVariation.size;
+
+  const handleColorSelect = (colorValue) => {
+    setSelectedVariation((current) => ({
+      ...current,
+      color: current.color === colorValue ? null : colorValue,
+    }));
+  };
+
+  const handleSizeSelect = (sizeValue) => {
+    setSelectedVariation((current) => ({
+      ...current,
+      size: current.size === sizeValue ? null : sizeValue,
+    }));
+  };
 
   const handleSearchClick = () => {
     if (canSearch) {
@@ -166,15 +190,18 @@ const ProductDetailPageClient = () => {
           <>
             {/* Konten Utama Halaman */}
             <main className="container mx-auto px-4 py-8 pt-24 md:pt-8 pb-24 md:pb-8 space-y-12 md:space-y-16 lg:space-y-20">
-              <div className="bg-slate-100 dark:bg-slate-950 min-h-screen font-sans">
+              <div className="bg-slate-100 dark:bg-slate-900 min-h-screen font-sans">
                 <div className="max-w-4xl mx-auto">
                   <div className="bg-white dark:bg-slate-900 md:grid md:grid-cols-2 md:gap-8">
                     <div className="md:col-span-1">
                       <ImageGallery images={product.images} />
                     </div>
+
                     <div className="md:col-span-1">
                       <ProductInfo product={product} />
-                      <div className="h-2 bg-slate-100 dark:bg-slate-950 md:hidden"></div>
+
+                      <Separator className="md:hidden" />
+
                       <Sheet>
                         <SheetTrigger asChild>
                           <button className="w-full text-left flex justify-between items-center p-4 md:hidden border-y border-slate-200 dark:border-slate-800">
@@ -184,34 +211,37 @@ const ProductDetailPageClient = () => {
                             <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-500" />
                           </button>
                         </SheetTrigger>
-                        <VariationContent product={product} />
+                        <VariationContent
+                          product={product}
+                          onColorSelect={handleColorSelect}
+                          onSizeSelect={handleSizeSelect}
+                          selectedVariation={selectedVariation}
+                          isAddToCartDisabled={isAddToCartDisabled}
+                        />
                       </Sheet>
+
                       <div className="hidden md:block p-6">
-                        <div>
-                          <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                            Warna
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {product.variations.colors.map((color) => (
-                              <Button
-                                key={color.value}
-                                variant={"outline"}
-                                disabled={!color.inStock}
-                                className="disabled:bg-slate-100 disabled:text-slate-400 disabled:line-through dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
-                              >
-                                {color.name}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                        <Button size="lg" className="w-full mt-6">
+                        <VariationSelector
+                          product={product}
+                          onColorSelect={handleColorSelect}
+                          onSizeSelect={handleSizeSelect}
+                          selectedVariation={selectedVariation}
+                        />
+
+                        <Button
+                          size="lg"
+                          className="w-full mt-6"
+                          disabled={isAddToCartDisabled}
+                        >
                           <ShoppingCart className="mr-2 h-5 w-5" /> Masukkan
                           Keranjang
                         </Button>
                       </div>
                     </div>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-slate-950"></div>
+
+                  <Separator className="md:hidden" />
+
                   <div className="p-4 md:p-6 bg-white dark:bg-slate-900">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
                       Deskripsi Produk
@@ -220,7 +250,9 @@ const ProductDetailPageClient = () => {
                       {product.description}
                     </p>
                   </div>
-                  <div className="h-2 bg-slate-100 dark:bg-slate-950"></div>
+
+                  <Separator className="md:hidden" />
+
                   <ReviewsSection reviews={product.reviews} />
                 </div>
               </div>

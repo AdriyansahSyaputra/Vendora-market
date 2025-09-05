@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import VariationSelector from "./VariationSelector";
 import {
   SheetContent,
   SheetHeader,
@@ -9,10 +9,13 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 
-const VariationContent = ({ product }) => {
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
-  const isAddToCartDisabled = !selectedColor || !selectedSize;
+const VariationContent = ({
+  product,
+  onColorSelect,
+  onSizeSelect,
+  selectedVariation,
+  isAddToCartDisabled,
+}) => {
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -41,41 +44,13 @@ const VariationContent = ({ product }) => {
             </div>
           </div>
         </SheetHeader>
-        <div className="mt-6">
-          <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Warna
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {product.variations.colors.map((color) => (
-              <Button
-                key={color.value}
-                variant={selectedColor === color.value ? "default" : "outline"}
-                onClick={() => setSelectedColor(color.value)}
-                disabled={!color.inStock}
-                className="disabled:bg-slate-100 disabled:text-slate-400 disabled:line-through dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
-              >
-                {color.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-        <div className="mt-4">
-          <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Ukuran
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {product.variations.sizes.map((size) => (
-              <Button
-                key={size.value}
-                variant={selectedSize === size.value ? "default" : "outline"}
-                onClick={() => setSelectedSize(size.value)}
-                disabled={!size.inStock}
-              >
-                {size.name}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {/* Melewatkan props baru ke VariationSelector */}
+        <VariationSelector
+          product={product}
+          onColorSelect={onColorSelect}
+          onSizeSelect={onSizeSelect}
+          selectedVariation={selectedVariation}
+        />
       </div>
       <SheetFooter className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
         <Button size="lg" className="w-full" disabled={isAddToCartDisabled}>
@@ -85,5 +60,4 @@ const VariationContent = ({ product }) => {
     </SheetContent>
   );
 };
-
 export default VariationContent;

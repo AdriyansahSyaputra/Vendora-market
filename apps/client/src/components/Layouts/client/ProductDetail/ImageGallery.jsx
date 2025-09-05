@@ -37,6 +37,16 @@ const ImageGallery = ({ images }) => {
 
   return (
     <div className="w-full">
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+      `}</style>
+
       <div
         id="main-image-container"
         className="relative aspect-square w-full overflow-x-auto snap-x snap-mandatory scrollbar-hide flex"
