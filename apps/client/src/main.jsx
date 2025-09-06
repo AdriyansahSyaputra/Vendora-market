@@ -6,17 +6,21 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./context/theme/provider";
 import { AuthProvider } from "./context/auth/authProvider.jsx";
 import { SocketProvider } from "./context/socket/socketProvider.jsx";
+import { Provider } from "react-redux";
+import { store } from "./features/store.js";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ThemeProvider>
-      <HelmetProvider>
-        <AuthProvider>
-          <SocketProvider>
-            <App />
-          </SocketProvider>
-        </AuthProvider>
-      </HelmetProvider>
-    </ThemeProvider>
+    <Provider store={store}>
+      <ThemeProvider>
+        <HelmetProvider>
+          <AuthProvider>
+            <SocketProvider>
+              <App />
+            </SocketProvider>
+          </AuthProvider>
+        </HelmetProvider>
+      </ThemeProvider>
+    </Provider>
   </StrictMode>
 );

@@ -107,22 +107,15 @@ const DesktopNavbar = () => {
               <p>Tidak ada pesan yang belum dibaca.</p>
             </HoverPreviewCard>
 
-            <HoverPreviewCard
-              trigger={
-                <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative">
-                  <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs"
-                  >
-                    3
-                  </Badge>
-                </button>
-              }
-              title="Keranjang Belanja"
-            >
-              <p>Keranjang Anda kosong. Yuk, mulai belanja!</p>
-            </HoverPreviewCard>
+            <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative">
+              <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs"
+              >
+                3
+              </Badge>
+            </button>
 
             <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
 
