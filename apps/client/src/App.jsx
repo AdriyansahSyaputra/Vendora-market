@@ -39,6 +39,10 @@ import SellerRequestPage from "./pages/client/SellerRequestPage";
 import NotificationDetailPageDesktop from "./pages/client/NotificationDetailPageDesktop";
 import ProductDetailPage from "./pages/vendor/Product/ProductDetailPage";
 import ProductDetailPageClient from "./pages/client/ProductDetailPageClient";
+import CartPage from "./pages/client/CartPage";
+import CheckoutPage from "./pages/client/CheckoutPage";
+import VoucherSelectionPage from "./pages/client/VoucherSelectionPage";
+import PaymentSelectionPage from "./pages/client/PaymentSelectionPage";
 
 const App = () => {
   return (
@@ -59,6 +63,10 @@ const App = () => {
           element={<NotificationDetailPageDesktop />}
         />
         <Route path="/product/detail" element={<ProductDetailPageClient />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout/vouchers" element={<VoucherSelectionPage />} />
+        <Route path="/checkout/payments" element={<PaymentSelectionPage />} />
 
         {/* ======================================================================= */}
         {/* Seller routes */}
@@ -67,7 +75,10 @@ const App = () => {
         <Route path="/store/products" element={<AllProductPage />} />
         <Route path="/store/products/new" element={<AddProductPage />} />
         <Route path="/store/products/categories" element={<CategoryPage />} />
-        <Route path="/store/products/details/:slug" element={<ProductDetailPage />} />
+        <Route
+          path="/store/products/details/:slug"
+          element={<ProductDetailPage />}
+        />
 
         {/* Order routes */}
         <Route path="/store/orders" element={<AllOrdersPage />} />

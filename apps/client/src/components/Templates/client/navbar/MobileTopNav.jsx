@@ -1,8 +1,12 @@
 import { ShoppingCart, MessageSquare, Search, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 const CartButton = () => (
-  <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative">
+  <Link
+    to="/cart"
+    className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative"
+  >
     <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
     <Badge
       variant="destructive"
@@ -10,7 +14,7 @@ const CartButton = () => (
     >
       3
     </Badge>
-  </button>
+  </Link>
 );
 
 const MessageButton = () => (

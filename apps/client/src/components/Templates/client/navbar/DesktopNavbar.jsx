@@ -107,7 +107,10 @@ const DesktopNavbar = () => {
               <p>Tidak ada pesan yang belum dibaca.</p>
             </HoverPreviewCard>
 
-            <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative">
+            <Link
+              to="/cart"
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors relative"
+            >
               <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
               <Badge
                 variant="destructive"
@@ -115,7 +118,7 @@ const DesktopNavbar = () => {
               >
                 3
               </Badge>
-            </button>
+            </Link>
 
             <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
 
