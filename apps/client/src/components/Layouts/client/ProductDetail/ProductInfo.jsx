@@ -1,6 +1,6 @@
 import { Badge } from "@/components/UI/Badge";
 
-const ProductInfo = ({ product }) => {
+const ProductInfo = ({ product, selectedVariationStock }) => {
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -30,7 +30,12 @@ const ProductInfo = ({ product }) => {
       <div className="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400 gap-4">
         <span>Terjual {product.soldCount}+</span>
         <span className="h-4 w-px bg-slate-300 dark:bg-slate-700"></span>
-        <span>Stok: {product.stock}</span>
+        <span>
+          Stok:{" "}
+          {selectedVariationStock !== null
+            ? selectedVariationStock
+            : product.stock}
+        </span>
       </div>
     </div>
   );

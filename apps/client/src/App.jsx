@@ -62,7 +62,9 @@ const App = () => {
           path="/notifications/:id"
           element={<NotificationDetailPageDesktop />}
         />
-        <Route path="/product/detail" element={<ProductDetailPageClient />} />
+
+        <Route path="/product/:slug" element={<ProductDetailPageClient />} />
+        
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/checkout/vouchers" element={<VoucherSelectionPage />} />

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
 import MobileTopNav from "@/components/Templates/client/navbar/MobileTopNav";
 import MobileBottomNav from "@/components/Templates/client/navbar/MobileBottomNav";
@@ -15,118 +15,7 @@ import { ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VariationSelector from "@/components/Layouts/client/ProductDetail/VariationSelector";
 import { Separator } from "@/components/ui/separator";
-
-const mockProduct = {
-  name: "Pro-Level Wireless Over-Ear Headphones",
-  images: [
-    "https://placehold.co/600x600/E2E8F0/475569?text=Main+Image+1",
-    "https://placehold.co/600x600/CBD5E1/475569?text=Side+View+2",
-    "https://placehold.co/600x600/94A3B8/FFFFFF?text=Folded+3",
-    "https://placehold.co/600x600/64748B/FFFFFF?text=Case+4",
-    "https://placehold.co/600x600/475569/FFFFFF?text=Detail+5",
-    "https://placehold.co/600x600/334155/FFFFFF?text=On+Stand+6",
-  ],
-  price: 2499000,
-  originalPrice: 3200000,
-  discountPercentage: 22,
-  soldCount: 1738,
-  stock: 215,
-  description:
-    "Experience unparalleled sound quality with our new Pro-Level headphones. Featuring active noise cancellation, a 30-hour battery life, and crystal-clear microphone for calls. Made with premium materials for maximum comfort, these headphones are perfect for audiophiles, gamers, and professionals on the go. Seamlessly connect to all your devices with Bluetooth 5.2 technology.",
-  variations: {
-    colors: [
-      { name: "Midnight Black", value: "black", inStock: true },
-      { name: "Arctic White", value: "white", inStock: true },
-      { name: "Navy Blue", value: "blue", inStock: false },
-      { name: "Crimson Red", value: "red", inStock: true },
-    ],
-    sizes: [{ name: "Standard Fit", value: "std", inStock: true }],
-  },
-  reviews: [
-    {
-      id: 1,
-      user: {
-        name: "Budi S.",
-        avatar: "https://i.pravatar.cc/40?u=a042581f4e29026704d",
-      },
-      rating: 5,
-      date: "2024-08-15",
-      comment:
-        "Kualitas suaranya luar biasa! ANC-nya berfungsi dengan sangat baik, nyaman dipakai berjam-jam. Worth every penny!",
-      images: ["https://placehold.co/100x100/E2E8F0/475569?text=Review+1"],
-      likes: 28,
-      dislikes: 0,
-      sellerReply: {
-        sellerName: "AudioPhile Store",
-        comment:
-          "Terima kasih atas ulasan positifnya, Kak Budi! Senang mendengar Anda puas dengan produk kami. Selamat menikmati musik berkualitas!",
-      },
-    },
-    {
-      id: 2,
-      user: {
-        name: "Citra W.",
-        avatar: "https://i.pravatar.cc/40?u=a042581f4e29026705d",
-      },
-      rating: 4,
-      date: "2024-08-12",
-      comment:
-        "Desainnya elegan dan baterainya awet banget. Sedikit masukan, earcupnya agak panas kalau dipakai di luar ruangan. Tapi overall sangat memuaskan.",
-      images: [],
-      likes: 12,
-      dislikes: 1,
-      sellerReply: null,
-    },
-    {
-      id: 3,
-      user: {
-        name: "Agus P.",
-        avatar: "https://i.pravatar.cc/40?u=a042581f4e29026706d",
-      },
-      rating: 5,
-      date: "2024-08-10",
-      comment:
-        "Mantap, pengiriman cepat, packing aman. Produk original dan berfungsi sempurna. Recommended seller!",
-      images: [
-        "https://placehold.co/100x100/CBD5E1/475569?text=Review+2",
-        "https://placehold.co/100x100/94A3B8/FFFFFF?text=Review+3",
-      ],
-      likes: 19,
-      dislikes: 0,
-      sellerReply: null,
-    },
-    {
-      id: 4,
-      user: {
-        name: "Dewi K.",
-        avatar: "https://i.pravatar.cc/40?u=a042581f4e29026707d",
-      },
-      rating: 5,
-      date: "2024-08-09",
-      comment:
-        "Suka banget sama warnanya. Koneksi Bluetooth stabil, gak pernah putus-putus. Keren!",
-      images: [],
-      likes: 8,
-      dislikes: 0,
-      sellerReply: null,
-    },
-    {
-      id: 5,
-      user: {
-        name: "Eko N.",
-        avatar: "https://i.pravatar.cc/40?u=a042581f4e29026708d",
-      },
-      rating: 4,
-      date: "2024-08-05",
-      comment:
-        "Build quality-nya kokoh. Untuk harga segini, fitur yang didapat sangat lengkap. Mungkin bisa ditambahkan app companion untuk equalizer.",
-      images: [],
-      likes: 5,
-      dislikes: 2,
-      sellerReply: null,
-    },
-  ],
-};
+import axios from "axios";
 
 const ProductDetailPageClient = () => {
   const location = useLocation();
@@ -134,28 +23,50 @@ const ProductDetailPageClient = () => {
   const [isSearching, setIsSearching] = useState(false);
   const canSearch = currentPage === "/detail-product";
 
-  const product = mockProduct;
+  const { slug } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
 
-  const [selectedVariation, setSelectedVariation] = useState({
-    color: null,
-    size: null,
-  });
+  useEffect(() => {
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`/api/client/product/${slug}`);
+        setProduct(response.data);
+      } catch (error) {
+        setError("Failed to fetch product.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const isAddToCartDisabled =
-    !selectedVariation.color || !selectedVariation.size;
+    loadProduct();
+  }, [slug]);
 
-  const handleColorSelect = (colorValue) => {
-    setSelectedVariation((current) => ({
-      ...current,
-      color: current.color === colorValue ? null : colorValue,
-    }));
-  };
+  const hasVariations = useMemo(
+    () => Array.isArray(product?.variations) && product.variations.length > 0,
+    [product]
+  );
 
-  const handleSizeSelect = (sizeValue) => {
-    setSelectedVariation((current) => ({
-      ...current,
-      size: current.size === sizeValue ? null : sizeValue,
-    }));
+  const isAddToCartDisabled = hasVariations
+    ? !selectedColor || !selectedSize
+    : product?.stock === 0;
+
+  // Dapatkan stok dari variasi yang dipilih
+  const selectedVariationStock = useMemo(() => {
+    if (!hasVariations || !selectedColor || !selectedSize) return null;
+    const variation = product.variations.find(
+      (v) => v.color === selectedColor && v.size === selectedSize
+    );
+    return variation ? variation.stock : null;
+  }, [product, hasVariations, selectedColor, selectedSize]);
+
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+    setSelectedSize(null);
   };
 
   const handleSearchClick = () => {
@@ -171,6 +82,10 @@ const ProductDetailPageClient = () => {
   useEffect(() => {
     setIsSearching(false);
   }, [currentPage]);
+
+  if (loading) return <div>Memuat produk...</div>;
+  if (error) return <div>{error}</div>;
+  if (!product) return <div>Produk tidak ditemukan.</div>;
 
   return (
     <>
@@ -198,35 +113,47 @@ const ProductDetailPageClient = () => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <ProductInfo product={product} />
+                      <ProductInfo product={product} selectedVariationStock={selectedVariationStock} hasVariations={hasVariations} />
 
                       <Separator className="md:hidden" />
 
                       <Sheet>
                         <SheetTrigger asChild>
-                          <button className="w-full text-left flex justify-between items-center p-4 md:hidden border-y border-slate-200 dark:border-slate-800">
-                            <span className="text-slate-800 dark:text-slate-200 font-semibold">
-                              Pilih Variasi (Warna, Ukuran)
-                            </span>
-                            <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-500" />
-                          </button>
+                          {hasVariations ? (
+                            <button className="w-full text-left flex justify-between items-center p-4 md:hidden border-y border-slate-200 dark:border-slate-800">
+                              <span className="text-slate-800 dark:text-slate-200 font-semibold">
+                                Pilih Variasi (Warna, Ukuran)
+                              </span>
+                              <ChevronRight className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+                            </button>
+                          ) : (
+                            <div className="hidden"></div>
+                          )}
                         </SheetTrigger>
+
                         <VariationContent
                           product={product}
+                          selectedColor={selectedColor}
+                          selectedSize={selectedSize}
+                          selectedVariationStock={selectedVariationStock}
                           onColorSelect={handleColorSelect}
-                          onSizeSelect={handleSizeSelect}
-                          selectedVariation={selectedVariation}
+                          onSizeSelect={setSelectedSize}
                           isAddToCartDisabled={isAddToCartDisabled}
                         />
                       </Sheet>
 
                       <div className="hidden md:block p-6">
-                        <VariationSelector
-                          product={product}
-                          onColorSelect={handleColorSelect}
-                          onSizeSelect={handleSizeSelect}
-                          selectedVariation={selectedVariation}
-                        />
+                        {hasVariations ? (
+                          <VariationSelector
+                            product={product}
+                            selectedColor={selectedColor}
+                            selectedSize={selectedSize}
+                            onColorSelect={handleColorSelect}
+                            onSizeSelect={setSelectedSize}
+                          />
+                        ) : (
+                          <div className="hidden"></div>
+                        )}
 
                         <Button
                           size="lg"
@@ -253,7 +180,7 @@ const ProductDetailPageClient = () => {
 
                   <Separator className="md:hidden" />
 
-                  <ReviewsSection reviews={product.reviews} />
+                  <ReviewsSection />
                 </div>
               </div>
             </main>

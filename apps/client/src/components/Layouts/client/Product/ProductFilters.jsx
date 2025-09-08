@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { X, Star, Percent, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { X, Star, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,15 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import {
+  fetchCategoriesAsync,
+  selectAllCategories,
+  selectCategoriesStatus,
+} from "@/features/productCategories/categorySlice";
 
-const categories = [
-  "Electronics",
-  "Fashion",
-  "Home & Kitchen",
-  "Beauty",
-  "Hobbies",
-  "Sports",
-];
 const sortOptions = {
   popular: "Most Popular",
   newest: "Newest",
@@ -39,6 +37,16 @@ const AllProductsFilterPanel = ({
   sortOption,
   onSortChange,
 }) => {
+  const dispatch = useDispatch();
+  const categories = useSelector(selectAllCategories);
+  const status = useSelector(selectCategoriesStatus);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchCategoriesAsync());
+    }
+  }, [status, dispatch]);
+
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
   }, [isOpen]);
@@ -202,6 +210,16 @@ const AllProductsFilterControls = ({
   onOpenFilterPanel,
   activeFilterCount,
 }) => {
+  const dispatch = useDispatch();
+  const categories = useSelector(selectAllCategories);
+  const status = useSelector(selectCategoriesStatus);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchCategoriesAsync());
+    }
+  }, [status, dispatch]);
+
   const getDiscountLabel = () => {
     if (filters.minDiscount === 1) return "Any Discount";
     if (filters.minDiscount > 1) return `${filters.minDiscount}% or more`;

@@ -213,8 +213,8 @@ export const deleteProduct = async (req, res) => {
 
 /**
  * @desc Mengambil detail produk berdasarkan slug
- * @route GET /api/vendor/product/details/:slug
- * @access Seller
+ * @route GET /api/vendor/product/details/:slug & /api/client/product/:slug
+ * @access Seller & Client
  */
 export const getProductDetails = async (req, res) => {
   const { slug } = req.params;
@@ -245,9 +245,11 @@ export const getProductDetails = async (req, res) => {
  * @returns {Array<object>} Array pipeline agregasi MongoDB.
  */
 const buildProductQueryPipeline = ({ storeId, search, category, stock }) => {
-  const matchStage = {
-    storeId: new mongoose.Types.ObjectId(storeId),
-  };
+  const matchStage = {};
+
+  if (storeId && mongoose.Types.ObjectId.isValid(storeId)) {
+    matchStage.storeId = new mongoose.Types.ObjectId(storeId);
+  }
 
   if (search) {
     matchStage.name = { $regex: search, $options: "i" };
@@ -339,6 +341,99 @@ export const getAllProductsByStore = async (req, res) => {
     ];
 
     // Eksekusi kedua query secara paralel untuk efisiensi
+    const [totalResult, products] = await Promise.all([
+      Product.aggregate(totalProductsPipeline),
+      Product.aggregate(dataPipeline),
+    ]);
+
+    const totalProducts = totalResult[0]?.total || 0;
+
+    res.status(200).json({
+      products,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages: Math.ceil(totalProducts / limitNumber),
+        totalItems: totalProducts,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error while fetching products.",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc  Mengambil semua produk dari seluruh store untuk ditampilkan di marketplace
+ * @route GET /api/client/products
+ * @access Public
+ */
+export const getAllProductsForMarketplace = async (req, res) => {
+  try {
+    const { search, category, stock, page = 1, limit = 10 } = req.query;
+
+    // Panggil helper TANPA storeId untuk mendapatkan semua produk
+    const basePipeline = buildProductQueryPipeline({
+      search,
+      category,
+      stock,
+    });
+
+    const totalProductsPipeline = [...basePipeline, { $count: "total" }];
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const dataPipeline = [
+      ...basePipeline,
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNumber },
+
+      // --- Tahap untuk populate info KATEGORI ---
+      {
+        $lookup: {
+          from: "productcategories", // Nama koleksi kategori Anda
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: { path: "$categoryInfo", preserveNullAndEmptyArrays: true } },
+
+      // --- PERUBAHAN PENTING: Tahap untuk populate info TOKO ---
+      {
+        $lookup: {
+          from: "stores", // Nama koleksi toko Anda
+          localField: "storeId",
+          foreignField: "_id",
+          as: "storeInfo",
+        },
+      },
+      { $unwind: { path: "$storeInfo", preserveNullAndEmptyArrays: true } },
+
+      // --- Tahap untuk merapikan struktur data ---
+      {
+        $addFields: {
+          // Bentuk ulang field 'category' agar terlihat seperti hasil .populate()
+          category: {
+            _id: "$categoryInfo._id",
+            name: "$categoryInfo.name",
+          },
+          // Bentuk ulang field 'store' agar mudah diakses di frontend
+          store: {
+            _id: "$storeInfo._id",
+            name: "$storeInfo.name",
+            isVerified: "$storeInfo.isVerified", // Asumsi ada field ini di model Store
+          },
+        },
+      },
+      // Hapus field sementara yang tidak diperlukan lagi
+      { $project: { categoryInfo: 0, storeInfo: 0, storeId: 0 } },
+    ];
+
     const [totalResult, products] = await Promise.all([
       Product.aggregate(totalProductsPipeline),
       Product.aggregate(dataPipeline),

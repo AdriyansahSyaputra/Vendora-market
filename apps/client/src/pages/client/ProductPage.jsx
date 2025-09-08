@@ -10,6 +10,7 @@ import {
   AllProductsFilterPanel,
 } from "@/components/Layouts/client/Product/ProductFilters";
 import ProductCard from "@/components/Elements/ProductCard";
+import axios from "axios";
 
 const slides = [
   {
@@ -32,100 +33,6 @@ const slides = [
   },
 ];
 
-const allProductsFromDB = [
-  {
-    id: 1,
-    name: "Wireless Gaming Mouse RGB",
-    price: "Rp 450.000",
-    originalPrice: "Rp 900.000",
-    discount: 50,
-    rating: 4.9,
-    sold: 1500,
-    image: "https://placehold.co/300x300/4F46E5/FFFFFF?text=Mouse",
-    category: "Electronics",
-    price_val: 450000,
-    date: "2025-06-25",
-  },
-  {
-    id: 2,
-    name: "Premium Cotton Hoodie",
-    price: "Rp 400.000",
-    originalPrice: null,
-    discount: null,
-    rating: 4.8,
-    sold: 2800,
-    image: "https://placehold.co/300x300/0D9488/FFFFFF?text=Hoodie",
-    category: "Fashion",
-    price_val: 400000,
-    date: "2025-06-24",
-  },
-  {
-    id: 3,
-    name: "Robot Vacuum Cleaner Pro",
-    price: "Rp 2.500.000",
-    originalPrice: "Rp 3.500.000",
-    discount: 28,
-    rating: 4.9,
-    sold: 800,
-    image: "https://placehold.co/300x300/9333EA/FFFFFF?text=Vacuum",
-    category: "Home & Kitchen",
-    price_val: 2500000,
-    date: "2025-06-26",
-  },
-  {
-    id: 4,
-    name: "Anti-Aging Face Serum",
-    price: "Rp 200.000",
-    originalPrice: null,
-    discount: null,
-    rating: 4.8,
-    sold: 15000,
-    image: "https://placehold.co/300x300/E11D48/FFFFFF?text=Serum",
-    category: "Beauty",
-    price_val: 200000,
-    date: "2025-06-22",
-  },
-  {
-    id: 5,
-    name: "Professional Drawing Tablet",
-    price: "Rp 999.000",
-    originalPrice: "Rp 1.500.000",
-    discount: 33,
-    rating: 4.9,
-    sold: 1100,
-    image: "https://placehold.co/300x300/65A30D/FFFFFF?text=Tablet",
-    category: "Hobbies",
-    price_val: 999000,
-    date: "2025-06-20",
-  },
-  {
-    id: 6,
-    name: "Smartwatch with GPS",
-    price: "Rp 1.000.000",
-    originalPrice: null,
-    discount: null,
-    rating: 4.7,
-    sold: 3200,
-    image: "https://placehold.co/300x300/1D4ED8/FFFFFF?text=Smartwatch",
-    category: "Electronics",
-    price_val: 1000000,
-    date: "2025-06-23",
-  },
-  {
-    id: 7,
-    name: "Yoga Mat Non-Slip",
-    price: "Rp 350.000",
-    originalPrice: null,
-    discount: null,
-    rating: 4.6,
-    sold: 5000,
-    image: "https://placehold.co/300x300/16A34A/FFFFFF?text=Yoga+Mat",
-    category: "Sports",
-    price_val: 350000,
-    date: "2025-05-10",
-  },
-];
-
 const initialFilters = {
   categories: [],
   rating: 0,
@@ -134,14 +41,27 @@ const initialFilters = {
 };
 
 const ProductPage = () => {
-  const [products, setProducts] = useState(allProductsFromDB);
+  const [products, setProducts] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [filters, setFilters] = useState(initialFilters);
   const [sortOption, setSortOption] = useState("popular");
   const [activeFilterCount, setActiveFilterCount] = useState(0);
 
   useEffect(() => {
-    let filtered = [...allProductsFromDB];
+    // Fetch products from backend API
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get("/api/client/products");
+        setProducts(response.data.products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    let filtered = [...products];
 
     // Apply filters
     if (filters.categories.length > 0) {

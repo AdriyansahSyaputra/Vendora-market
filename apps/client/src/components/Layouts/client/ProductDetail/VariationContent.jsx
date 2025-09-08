@@ -9,20 +9,22 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(amount);
+
 const VariationContent = ({
   product,
   onColorSelect,
   onSizeSelect,
-  selectedVariation,
   isAddToCartDisabled,
+  selectedColor,
+  selectedSize,
+  selectedVariationStock,
 }) => {
-  const formatCurrency = (amount) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-
   return (
     <SheetContent
       side="bottom"
@@ -40,16 +42,22 @@ const VariationContent = ({
               <SheetTitle className="text-red-600 dark:text-red-500 text-xl">
                 {formatCurrency(product.price)}
               </SheetTitle>
-              <SheetDescription>Stok: {product.stock}</SheetDescription>
+              <SheetDescription>
+                Stok:{" "}
+                {selectedVariationStock !== null
+                  ? selectedVariationStock
+                  : product.stock}
+              </SheetDescription>
             </div>
           </div>
         </SheetHeader>
         {/* Melewatkan props baru ke VariationSelector */}
         <VariationSelector
           product={product}
+          selectedColor={selectedColor}
+          selectedSize={selectedSize}
           onColorSelect={onColorSelect}
           onSizeSelect={onSizeSelect}
-          selectedVariation={selectedVariation}
         />
       </div>
       <SheetFooter className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
@@ -60,4 +68,5 @@ const VariationContent = ({
     </SheetContent>
   );
 };
+
 export default VariationContent;
