@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Helmet } from "react-helmet-async";
 import { useLocation, useParams } from "react-router-dom";
 import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
@@ -15,7 +16,9 @@ import { ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VariationSelector from "@/components/Layouts/client/ProductDetail/VariationSelector";
 import { Separator } from "@/components/ui/separator";
+import FlashMessage from "@/components/Elements/FlashMessage";
 import axios from "axios";
+import { addToCartAsync, selectCartStatus } from "@/features/cart/cartSlice";
 
 const ProductDetailPageClient = () => {
   const location = useLocation();
@@ -29,6 +32,10 @@ const ProductDetailPageClient = () => {
   const [error, setError] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [notification, setNotification] = useState(null);
+
+  const dispatch = useDispatch();
+  const cartStatus = useSelector(selectCartStatus);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -50,10 +57,6 @@ const ProductDetailPageClient = () => {
     () => Array.isArray(product?.variations) && product.variations.length > 0,
     [product]
   );
-
-  const isAddToCartDisabled = hasVariations
-    ? !selectedColor || !selectedSize
-    : product?.stock === 0;
 
   // Dapatkan stok dari variasi yang dipilih
   const selectedVariationStock = useMemo(() => {
@@ -83,6 +86,71 @@ const ProductDetailPageClient = () => {
     setIsSearching(false);
   }, [currentPage]);
 
+  const handleAddToCart = async () => {
+    if (!product || (hasVariations && (!selectedColor || !selectedSize))) {
+      setNotification({
+        variant: "destructive",
+        title: "Perhatian!",
+        description: "Silakan pilih variasi produk terlebih dahulu.",
+      });
+      return;
+    }
+
+    let itemData;
+    if (hasVariations) {
+      const selectedVariation = product.variations.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      );
+      if (!selectedVariation) return;
+      itemData = {
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        variation: {
+          variationId: selectedVariation._id,
+          color: selectedVariation.color,
+          size: selectedVariation.size,
+        },
+        quantity: 1,
+        stock: selectedVariation.stock,
+        storeId: product.storeId._id,
+      };
+    } else {
+      itemData = {
+        productId: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        variation: null,
+        quantity: 1,
+        stock: product.stock,
+        storeId: product.storeId._id,
+      };
+    }
+
+    try {
+      await dispatch(addToCartAsync(itemData)).unwrap();
+
+      setNotification({
+        variant: "success",
+        title: "Berhasil!",
+        description: `"${itemData.name}" telah ditambahkan ke keranjang.`,
+      });
+    } catch (error) {
+      console.error("Gagal menambahkan ke keranjang:", error);
+      setNotification({
+        variant: "destructive",
+        title: "Gagal Menambahkan",
+        description: error.message || "Terjadi kesalahan. Coba lagi.",
+      });
+    }
+  };
+
+  const isAddToCartDisabled =
+    (hasVariations ? !selectedColor || !selectedSize : product?.stock === 0) ||
+    cartStatus === "loading";
+
   if (loading) return <div>Memuat produk...</div>;
   if (error) return <div>{error}</div>;
   if (!product) return <div>Produk tidak ditemukan.</div>;
@@ -90,6 +158,15 @@ const ProductDetailPageClient = () => {
   return (
     <>
       <Helmet title="Product" />
+
+      {notification && (
+        <FlashMessage
+          variant={notification.variant}
+          title={notification.title}
+          description={notification.description}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
 
       <div className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
         {/* Navbar Untuk Desktop */}
@@ -113,7 +190,11 @@ const ProductDetailPageClient = () => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <ProductInfo product={product} selectedVariationStock={selectedVariationStock} hasVariations={hasVariations} />
+                      <ProductInfo
+                        product={product}
+                        selectedVariationStock={selectedVariationStock}
+                        hasVariations={hasVariations}
+                      />
 
                       <Separator className="md:hidden" />
 
@@ -159,9 +240,12 @@ const ProductDetailPageClient = () => {
                           size="lg"
                           className="w-full mt-6"
                           disabled={isAddToCartDisabled}
+                          onClick={handleAddToCart}
                         >
-                          <ShoppingCart className="mr-2 h-5 w-5" /> Masukkan
-                          Keranjang
+                          <ShoppingCart className="mr-2 h-5 w-5" />{" "}
+                          {cartStatus === "loading"
+                            ? "Menambahkan..."
+                            : "Masukkan Keranjang"}
                         </Button>
                       </div>
                     </div>

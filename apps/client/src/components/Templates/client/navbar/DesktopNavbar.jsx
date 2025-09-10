@@ -1,3 +1,4 @@
+import { useSelector } from "react-redux";
 import { ModeToggle } from "@/components/Elements/mode-toggle";
 import {
   Search,
@@ -24,6 +25,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/auth/authContext";
 import NotificationListDesktop from "@/components/Layouts/client/Notification/NotificationListDesktop";
 import { Badge } from "@/components/ui/badge";
+import { selectCartTotalQuantity } from "@/features/cart/cartSlice";
 
 const navLinks = [
   {
@@ -50,6 +52,7 @@ const navLinks = [
 
 const DesktopNavbar = () => {
   const { user, logout } = useAuth();
+  const totalQuantity = useSelector(selectCartTotalQuantity);
 
   const userInitials =
     user?.username
@@ -116,7 +119,7 @@ const DesktopNavbar = () => {
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs"
               >
-                3
+                {totalQuantity}
               </Badge>
             </Link>
 

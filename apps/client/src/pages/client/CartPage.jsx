@@ -1,8 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchCart,
+  selectCartStatus,
+  selectCartItemsBySeller,
+  updateQuantityAsync,
+  removeFromCartAsync,
+} from "@/features/cart/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCheckout } from "@/context/checkout/checkoutContext";
 import PaymentModal from "@/components/Layouts/client/Checkout/PaymentModal";
 import VoucherModal from "@/components/Layouts/client/Checkout/VoucherModal";
 import ShoppingSummary from "@/components/Layouts/client/Checkout/ShoppingSummary";
@@ -21,50 +28,75 @@ import Footer from "@/components/Templates/client/footer/Footer";
 import Header from "@/components/Elements/Header";
 
 function CartPage() {
-  // ... State and handlers are mostly the same
   const navigate = useNavigate();
-  const [state, dispatch] = useCheckout();
-  const { cartItems, selectedItems } = state;
+  const dispatch = useDispatch();
+
+  const cartBySeller = useSelector(selectCartItemsBySeller);
+  const cartStatus = useSelector(selectCartStatus);
+
+  console.log(cartBySeller)
+
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  useEffect(() => {
+    if (cartStatus === "idle") {
+      dispatch(fetchCart());
+    }
+  }, [cartStatus, dispatch]);
+
+  const allItemsInCart = useMemo(
+    () => Object.values(cartBySeller).flatMap((s) => s.items),
+    [cartBySeller]
+  );
+  const allItemIds = useMemo(
+    () => allItemsInCart.map((i) => i._id),
+    [allItemsInCart]
+  );
+
+  const isAllSelected =
+    allItemsInCart.length > 0 && selectedItems.length === allItemsInCart.length;
+
+  const subtotal = useMemo(() => {
+    return selectedItems.reduce((total, selectedId) => {
+      const item = allItemsInCart.find((i) => i._id === selectedId);
+      return total + (item ? item.price * item.quantity : 0);
+    }, 0);
+  }, [selectedItems, allItemsInCart]);
+
+  const handleQuantityChange = (cartItemId, quantity) => {
+    dispatch(updateQuantityAsync({ cartItemId, quantity }));
+  };
+
+  const handleRemoveItem = (cartItemId) => {
+    dispatch(removeFromCartAsync(cartItemId));
+    setSelectedItems((prev) => prev.filter((id) => id !== cartItemId));
+  };
+
+  const handleSelectItem = (itemId, isChecked) => {
+    setSelectedItems((prev) =>
+      isChecked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked !== undefined ? e.target.checked : e;
+    setSelectedItems(isChecked ? allItemIds : []);
+  };
+
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const handleClick = () => {
-    if (window.innerWidth >= 768) {
+  const handleCheckoutClick = () => {
+    if (window.innerWidth >= 1024) {
       alert("Checkout sedang diproses...");
     } else {
-      // Mobile
       navigate("/checkout");
     }
   };
 
-  const handleSelectItem = (itemId, isSelected) =>
-    dispatch({
-      type: "TOGGLE_ITEM_SELECTION",
-      payload: { itemId, isSelected },
-    });
-  const handleSelectAll = (e) =>
-    dispatch({ type: "TOGGLE_ALL_ITEMS", payload: e.target.checked });
-  const handleQuantityChange = (itemId, quantity) =>
-    dispatch({ type: "UPDATE_QUANTITY", payload: { itemId, quantity } });
-  const handleRemoveItem = (itemId) =>
-    dispatch({ type: "REMOVE_ITEM", payload: itemId });
-
-  const subtotal = useMemo(
-    () =>
-      selectedItems.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      ),
-    [selectedItems]
-  );
-  const allItemIdsInCart = useMemo(
-    () =>
-      Object.values(cartItems).flatMap((s) => s.items.map((item) => item.id)),
-    [cartItems]
-  );
-  const isAllSelected =
-    allItemIdsInCart.length > 0 &&
-    selectedItems.length === allItemIdsInCart.length;
+  if (cartStatus === "loading" && allItemsInCart.length === 0) {
+    return <div>Memuat keranjang...</div>;
+  }
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
@@ -95,32 +127,23 @@ function CartPage() {
                     Pilih Semua ({selectedItems.length} produk)
                   </label>
                 </div>
-                {Object.keys(cartItems).length > 0 ? (
-                  Object.entries(cartItems).map(([sellerId, sellerData]) => (
-                    <div
-                      key={sellerId}
-                      className="border-b border-slate-200 dark:border-slate-800 last:border-b-0"
-                    >
+                {allItemsInCart.length > 0 ? (
+                  Object.entries(cartBySeller).map(([sellerId, sellerData]) => (
+                    <div key={sellerId} className="border-b last:border-b-0">
                       <div className="p-4 flex items-center gap-2">
                         <BadgeCheck
-                          className={`h-5 w-5 ${
-                            sellerData.isVerified
-                              ? "text-sky-500"
-                              : "text-slate-400"
-                          }`}
+                          className="w-5 h-5 text-blue-500"
                         />
                         <span className="font-semibold text-sm">
                           {sellerData.sellerName}
                         </span>
                       </div>
-                      <div className="px-4 divide-y divide-slate-200 dark:divide-slate-800">
+                      <div className="px-4 divide-y">
                         {sellerData.items.map((item) => (
                           <CartItemCard
-                            key={item.id}
+                            key={item._id}
                             item={item}
-                            isSelected={selectedItems.some(
-                              (sel) => sel.id === item.id
-                            )}
+                            isSelected={selectedItems.includes(item._id)}
                             onCheckboxChange={handleSelectItem}
                             onQuantityChange={handleQuantityChange}
                             onRemove={handleRemoveItem}
@@ -143,7 +166,8 @@ function CartPage() {
                   subtotal={subtotal}
                   onVoucherClick={() => setIsVoucherModalOpen(true)}
                   onPaymentClick={() => setIsPaymentModalOpen(true)}
-                  onCheckout={handleClick}
+                  onCheckout={handleCheckoutClick}
+                  selectedItemCount={selectedItems.length}
                 />
               </div>
             </div>
@@ -167,6 +191,7 @@ function CartPage() {
               Checkout ({selectedItems.length})
             </Button>
           </div>
+
           {/* Modals */}
           <Dialog
             open={isVoucherModalOpen}

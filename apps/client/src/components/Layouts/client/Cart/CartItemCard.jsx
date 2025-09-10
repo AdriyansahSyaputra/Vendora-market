@@ -13,7 +13,7 @@ const CartItemCard = ({
     <div className="pt-1">
       <Checkbox
         checked={isSelected}
-        onChange={(e) => onCheckboxChange(item.id, e.target.checked)}
+        onCheckedChange={(checked) => onCheckboxChange(item._id, checked)}
       />
     </div>
     <img
@@ -26,7 +26,11 @@ const CartItemCard = ({
         {item.name}
       </p>
       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        {item.variation}
+        {item.variation && (
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {item.variation.color}, {item.variation.size}
+          </p>
+        )}
       </p>
       <p className="text-base md:text-lg font-bold text-slate-900 dark:text-slate-100 mt-2">
         {item.price.toLocaleString("id-ID", {
@@ -40,29 +44,27 @@ const CartItemCard = ({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+            onClick={() => onQuantityChange(item._id, item.quantity - 1)}
             disabled={item.quantity <= 1}
           >
-            {" "}
-            <Minus className="h-4 w-4" />{" "}
+            <Minus className="h-4 w-4" />
           </Button>
           <span className="px-3 text-sm font-medium">{item.quantity}</span>
           <Button
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+            onClick={() => onQuantityChange(item._id, item.quantity + 1)}
             disabled={item.quantity >= item.stock}
           >
-            {" "}
-            <Plus className="h-4 w-4" />{" "}
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-slate-500 hover:text-red-500"
-          onClick={() => onRemove(item.id)}
+          onClick={() => onRemove(item._id)}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

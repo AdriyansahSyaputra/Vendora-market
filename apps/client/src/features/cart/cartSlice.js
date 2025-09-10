@@ -20,8 +20,7 @@ export const fetchCart = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await cartService.getCart();
-      // API diharapkan mengembalikan objek cart, kita ambil array 'items' nya
-      return response.data.items || [];
+      return response.data || [];
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -37,7 +36,7 @@ export const addToCartAsync = createAsyncThunk(
   async (itemData, { rejectWithValue }) => {
     try {
       const response = await cartService.addItem(itemData);
-      return response.data.items;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -52,10 +51,18 @@ export const updateQuantityAsync = createAsyncThunk(
   "cart/updateQuantity",
   async (updateData, { rejectWithValue }) => {
     try {
-      const response = await cartService.updateItem(updateData);
-      return response.data.items;
+      const { cartItemId, quantity } = updateData;
+
+      const response = await cartService.updateCartItemQuantity(
+        cartItemId,
+        quantity
+      );
+
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      const message =
+        error.response?.data?.message || "Gagal mengubah kuantitas.";
+      return rejectWithValue({ message });
     }
   }
 );
@@ -68,8 +75,8 @@ export const removeFromCartAsync = createAsyncThunk(
   "cart/removeFromCart",
   async (cartItemId, { rejectWithValue }) => {
     try {
-      const response = await cartService.removeItem(cartItemId);
-      return response.data.items;
+      const response = await cartService.removeCartItem(cartItemId);
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -94,7 +101,7 @@ const cartSlice = createSlice({
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items;
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.status = "failed";
@@ -107,7 +114,7 @@ const cartSlice = createSlice({
       })
       .addCase(addToCartAsync.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items;
       })
       .addCase(addToCartAsync.rejected, (state, action) => {
         state.status = "failed";
@@ -122,7 +129,7 @@ const cartSlice = createSlice({
       })
       .addCase(updateQuantityAsync.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items;
       })
       .addCase(updateQuantityAsync.rejected, (state, action) => {
         state.status = "failed";
@@ -135,7 +142,7 @@ const cartSlice = createSlice({
       })
       .addCase(removeFromCartAsync.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.items;
       })
       .addCase(removeFromCartAsync.rejected, (state, action) => {
         state.status = "failed";
@@ -187,5 +194,5 @@ export const selectCartItemsBySeller = createSelector(
     }, {});
   }
 );
-    
+
 export default cartSlice.reducer;

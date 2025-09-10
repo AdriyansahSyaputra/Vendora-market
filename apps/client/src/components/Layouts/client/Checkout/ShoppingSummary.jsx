@@ -9,6 +9,7 @@ const ShoppingSummary = ({
   onVoucherClick,
   onPaymentClick,
   onCheckout,
+  selectedItemCount,
 }) => {
   const [state] = useCheckout();
   const { appliedVouchers, selectedPayment } = state;
@@ -123,7 +124,7 @@ const ShoppingSummary = ({
         </span>
       </div>
       <Button className="w-full mt-6" size="lg" onClick={onCheckout}>
-        Checkout
+        Checkout ({selectedItemCount})
       </Button>
     </Card>
   );

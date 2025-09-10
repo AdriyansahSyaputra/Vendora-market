@@ -11,12 +11,16 @@ import {
   markNotificationsAsRead,
   getNotificationById,
 } from "../controllers/notificationController.js";
-import { addItemToCart } from "../controllers/cartController.js";
+import {
+  addItemToCart,
+  getCart,
+  updateCartItemQuantity,
+  removeCartItem,
+} from "../controllers/cartController.js";
 import {
   getAllProductsForMarketplace,
   getProductDetails,
 } from "../controllers/productController.js";
-import { getAllProductCategoriesForMarketplace } from "../controllers/productCategoryController.js";
 
 const router = express.Router();
 
@@ -35,12 +39,16 @@ router.put("/notifications/read", authenticateUser, markNotificationsAsRead);
 
 router.get("/notifications/:id", authenticateUser, getNotificationById);
 
+router.get("/cart", authenticateUser, getCart);
+
 router.post("/cart", authenticateUser, addItemToCart);
+
+router.put("/cart/:cartItemId", authenticateUser, updateCartItemQuantity);
+
+router.delete("/cart/:cartItemId", authenticateUser, removeCartItem);
 
 router.get("/products", getAllProductsForMarketplace);
 
 router.get("/product/:slug", getProductDetails);
-
-router.get("/categories", getAllProductCategoriesForMarketplace);
 
 export default router;
