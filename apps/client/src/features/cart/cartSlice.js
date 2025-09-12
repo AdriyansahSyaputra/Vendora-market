@@ -178,18 +178,22 @@ export const selectCartTotalPrice = createSelector([selectCartItems], (items) =>
   items.reduce((total, item) => total + item.price * item.quantity, 0)
 );
 
-export const selectCartItemsBySeller = createSelector(
+export const selectCartItemsByStore = createSelector(
   [selectCartItems],
   (items) => {
-    return items.reduce((acc, item) => {
-      // Pastikan item.seller ada sebelum mengakses id
-      const sellerId = item.seller ? item.seller.id : "unknown-seller";
-      const sellerName = item.seller ? item.seller.name : "Toko Tidak Dikenal";
+    if (!Array.isArray(items)) {
+      return {};
+    }
 
-      if (!acc[sellerId]) {
-        acc[sellerId] = { sellerName, items: [] };
+    return items.reduce((acc, item) => {
+      const storeId = item.storeId?._id || "unknown-store";
+      const storeName = item.storeId?.name || "Toko Tidak Dikenal";
+
+      if (!acc[storeId]) {
+        acc[storeId] = { storeName, items: [] };
       }
-      acc[sellerId].items.push(item);
+
+      acc[storeId].items.push(item);
       return acc;
     }, {});
   }

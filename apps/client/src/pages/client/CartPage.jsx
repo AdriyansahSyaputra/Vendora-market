@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchCart,
   selectCartStatus,
-  selectCartItemsBySeller,
+  selectCartItemsByStore,
   updateQuantityAsync,
   removeFromCartAsync,
 } from "@/features/cart/cartSlice";
@@ -31,10 +31,10 @@ function CartPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const cartBySeller = useSelector(selectCartItemsBySeller);
+  const cartByStore = useSelector(selectCartItemsByStore);
   const cartStatus = useSelector(selectCartStatus);
 
-  console.log(cartBySeller)
+  console.log(cartByStore);
 
   const [selectedItems, setSelectedItems] = useState([]);
 
@@ -45,8 +45,8 @@ function CartPage() {
   }, [cartStatus, dispatch]);
 
   const allItemsInCart = useMemo(
-    () => Object.values(cartBySeller).flatMap((s) => s.items),
-    [cartBySeller]
+    () => Object.values(cartByStore).flatMap((s) => s.items),
+    [cartByStore]
   );
   const allItemIds = useMemo(
     () => allItemsInCart.map((i) => i._id),
@@ -78,8 +78,7 @@ function CartPage() {
     );
   };
 
-  const handleSelectAll = (e) => {
-    const isChecked = e.target.checked !== undefined ? e.target.checked : e;
+  const handleSelectAll = (isChecked) => {
     setSelectedItems(isChecked ? allItemIds : []);
   };
 
@@ -118,7 +117,7 @@ function CartPage() {
                   <Checkbox
                     id="select-all"
                     checked={isAllSelected}
-                    onChange={handleSelectAll}
+                    onCheckedChange={handleSelectAll}
                   />
                   <label
                     htmlFor="select-all"
@@ -128,18 +127,16 @@ function CartPage() {
                   </label>
                 </div>
                 {allItemsInCart.length > 0 ? (
-                  Object.entries(cartBySeller).map(([sellerId, sellerData]) => (
-                    <div key={sellerId} className="border-b last:border-b-0">
+                  Object.entries(cartByStore).map(([storeId, storeData]) => (
+                    <div key={storeId} className="border-b last:border-b-0">
                       <div className="p-4 flex items-center gap-2">
-                        <BadgeCheck
-                          className="w-5 h-5 text-blue-500"
-                        />
+                        <BadgeCheck className="w-5 h-5 text-blue-500" />
                         <span className="font-semibold text-sm">
-                          {sellerData.sellerName}
+                          {storeData.storeName}
                         </span>
                       </div>
                       <div className="px-4 divide-y">
-                        {sellerData.items.map((item) => (
+                        {storeData.items.map((item) => (
                           <CartItemCard
                             key={item._id}
                             item={item}
