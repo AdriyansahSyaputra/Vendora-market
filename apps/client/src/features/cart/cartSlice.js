@@ -7,6 +7,9 @@ import cartService from "./cartService";
 
 const initialState = {
   items: [],
+  selectedItemIds: [],
+  appliedVouchers: [],
+  selectedPayment: null,
   status: "idle",
   error: null,
 };
@@ -87,71 +90,77 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    clearCartLocally: (state) => {
-      state.items = [];
-      state.status = "idle";
-      state.error = null;
+    toggleItemSelection: (state, action) => {
+      const itemId = action.payload;
+      const index = state.selectedItemIds.indexOf(itemId);
+      if (index >= 0) {
+        state.selectedItemIds.splice(index, 1);
+      } else {
+        state.selectedItemIds.push(itemId);
+      }
+    },
+    toggleSelectAll: (state, action) => {
+      const { allItemIds, isChecked } = action.payload;
+      state.selectedItemIds = isChecked ? allItemIds : [];
+    },
+    clearSelection: (state) => {
+      state.selectedItemIds = [];
+    },
+    applyVouchers: (state, action) => {
+      state.appliedVouchers = action.payload;
+    },
+    setSelectedPayment: (state, action) => {
+      state.selectedPayment = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      // --- Kasus untuk fetchCart ---
-      .addCase(fetchCart.pending, (state) => {
-        state.status = "loading";
-      })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload.items;
-      })
-      .addCase(fetchCart.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-
-      // --- Kasus untuk addToCartAsync ---
-      .addCase(addToCartAsync.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(addToCartAsync.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.items = action.payload.items;
-      })
-      .addCase(addToCartAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-
-      // --- Kasus untuk updateQuantityAsync ---
-      .addCase(updateQuantityAsync.pending, (state) => {
-        // Kita bisa set status 'loading' per item jika UI-nya kompleks,
-        // tapi untuk sekarang kita set status global saja.
-        state.status = "loading";
-      })
-      .addCase(updateQuantityAsync.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.items = action.payload.items;
-      })
-      .addCase(updateQuantityAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-
-      // --- Kasus untuk removeFromCartAsync ---
-      .addCase(removeFromCartAsync.pending, (state) => {
-        state.status = "loading";
+        state.items = action.payload.items || [];
+        state.selectedItemIds = [];
       })
       .addCase(removeFromCartAsync.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload.items;
+        state.items = action.payload.items || [];
+        const removedItemId = action.meta.arg;
+        state.selectedItemIds = state.selectedItemIds.filter(
+          (id) => id !== removedItemId
+        );
       })
-      .addCase(removeFromCartAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      });
+      .addMatcher(
+        (action) =>
+          ["cart/addItem/fulfilled", "cart/updateQuantity/fulfilled"].includes(
+            action.type
+          ),
+        (state, action) => {
+          state.status = "succeeded";
+          state.items = action.payload.items || [];
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/pending"),
+        (state) => {
+          state.status = "loading";
+        }
+      )
+      .addMatcher(
+        (action) => action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.status = "failed";
+          state.error = action.payload;
+        }
+      );
   },
 });
 
-export const { clearCartLocally } = cartSlice.actions;
+export const {
+  toggleItemSelection,
+  toggleSelectAll,
+  clearSelection,
+  applyVouchers,
+  setSelectedPayment,
+} = cartSlice.actions;
 
 // Selectors
 const selectCartState = (state) => state.cart;
@@ -168,6 +177,12 @@ export const selectCartError = createSelector(
   [selectCartState],
   (cart) => cart.error
 );
+
+export const selectAppliedVouchers = (state) =>
+  selectCartState(state).appliedVouchers;
+
+export const selectSelectedPayment = (state) =>
+  selectCartState(state).selectedPayment;
 
 export const selectCartTotalQuantity = createSelector(
   [selectCartItems],
@@ -196,6 +211,27 @@ export const selectCartItemsByStore = createSelector(
       acc[storeId].items.push(item);
       return acc;
     }, {});
+  }
+);
+
+export const selectSelectedItemIds = (state) => state.cart.selectedItemIds;
+
+export const selectSelectedItems = createSelector(
+  [selectCartItems, selectSelectedItemIds],
+  (items, selectedIds) => {
+    if (!Array.isArray(items)) return [];
+    return items.filter((item) => selectedIds.includes(item._id));
+  }
+);
+
+// Selector BARU: Menghitung subtotal hanya dari item yang dipilih
+export const selectSubtotal = createSelector(
+  [selectSelectedItems],
+  (selectedItems) => {
+    return selectedItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
   }
 );
 

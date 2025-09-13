@@ -8,7 +8,7 @@ import { AuthProvider } from "./context/auth/authProvider.jsx";
 import { SocketProvider } from "./context/socket/socketProvider.jsx";
 import { Provider } from "react-redux";
 import { store } from "./features/store.js";
-import { CheckoutProvider } from "./context/checkout/checkoutContext.jsx";
+import { CheckoutProvider } from "./context/checkout/checkoutProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCheckout } from "@/context/checkout/CheckoutContext";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Header from "@/components/Elements/Header";
+import {
+  setSelectedPayment,
+  selectSelectedPayment,
+} from "@/features/cart/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
 
-// --- Mock Data (Di aplikasi nyata, ini dari API) ---
 const mockPaymentMethods = [
   {
     category: "E-Wallet",
@@ -59,8 +62,6 @@ const mockPaymentMethods = [
   },
 ];
 
-// --- Komponen-Komponen Lokal ---
-
 const PaymentMethodCard = ({ method, isSelected, onSelect }) => (
   <div
     onClick={() => onSelect(method)}
@@ -86,21 +87,26 @@ const PaymentMethodCard = ({ method, isSelected, onSelect }) => (
   </div>
 );
 
-// --- Komponen Halaman Utama ---
-
 export default function PaymentSelectionPage() {
   const navigate = useNavigate();
-  const [state, dispatch] = useCheckout();
-  const { selectedPayment } = state;
+  const dispatch = useDispatch();
 
-  // State lokal untuk mengelola pilihan sebelum disimpan ke context
-  const [currentSelection, setCurrentSelection] = useState(
-    selectedPayment || null
+  const currentlySelectedPayment = useSelector(selectSelectedPayment);
+
+  const [selectedPaymentId, setSelectedPaymentId] = useState(
+    currentlySelectedPayment?.id
   );
 
   const handleConfirmSelection = () => {
-    dispatch({ type: "SELECT_PAYMENT", payload: currentSelection });
-    navigate(-1); // Kembali ke halaman checkout
+    const selectedMethodObject = mockPaymentMethods
+      .flatMap((g) => g.methods)
+      .find((m) => m.id === selectedPaymentId);
+
+    if (selectedMethodObject) {
+      dispatch(setSelectedPayment(selectedMethodObject));
+    }
+
+    navigate(-1);
   };
 
   return (
@@ -109,13 +115,8 @@ export default function PaymentSelectionPage() {
 
       <main className="flex-grow p-4">
         <RadioGroup
-          value={currentSelection?.id || ""}
-          onValueChange={(id) => {
-            const newSelection = mockPaymentMethods
-              .flatMap((group) => group.methods)
-              .find((method) => method.id === id);
-            setCurrentSelection(newSelection);
-          }}
+          value={selectedPaymentId}
+          onValueChange={setSelectedPaymentId}
         >
           {mockPaymentMethods.map((group) => (
             <div key={group.category} className="mb-4">
@@ -127,8 +128,8 @@ export default function PaymentSelectionPage() {
                   <PaymentMethodCard
                     key={method.id}
                     method={method}
-                    isSelected={currentSelection?.id === method.id}
-                    onSelect={setCurrentSelection}
+                    isSelected={selectedPaymentId === method.id}
+                    onSelect={() => setSelectedPaymentId(method.id)}
                   />
                 ))}
               </div>
@@ -141,7 +142,7 @@ export default function PaymentSelectionPage() {
         <Button
           className="w-full"
           onClick={handleConfirmSelection}
-          disabled={!currentSelection}
+          disabled={!selectedPaymentId}
         >
           Konfirmasi
         </Button>

@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCheckout } from "@/context/checkout/CheckoutContext";
+import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Elements/Header";
-import { Ticket, CheckCircle, ArrowLeft } from "lucide-react";
+import { Ticket } from "lucide-react";
+import {
+  applyVouchers,
+  selectAppliedVouchers,
+} from "@/features/cart/cartSlice";
 
-// --- Mock Data (Di aplikasi nyata, ini dari API) ---
 const mockVouchers = [
   {
     id: "DSC10",
@@ -39,8 +42,6 @@ const mockVouchers = [
     value: 5,
   },
 ];
-
-// --- Komponen-Komponen Lokal ---
 
 const VoucherCard = ({ voucher, isSelected, onSelect }) => {
   const getIconColor = (type) => {
@@ -89,39 +90,27 @@ const VoucherCard = ({ voucher, isSelected, onSelect }) => {
   );
 };
 
-// --- Komponen Halaman Utama ---
-
 export default function VoucherSelectionPage() {
   const navigate = useNavigate();
-  const [state, dispatch] = useCheckout();
-  const { appliedVouchers } = state;
+  const dispatch = useDispatch();
 
-  // State lokal untuk mengelola pilihan sebelum disimpan ke context
+  const currentlyAppliedVouchers = useSelector(selectAppliedVouchers);
+
   const [selectedVouchers, setSelectedVouchers] = useState(
-    appliedVouchers || []
+    currentlyAppliedVouchers || []
   );
 
   const handleSelectVoucher = (voucher) => {
     setSelectedVouchers((prev) => {
-      // Hapus voucher lain dengan tipe yang sama
       const otherVouchers = prev.filter((v) => v.type !== voucher.type);
-
-      // Cek apakah voucher yang diklik sudah terpilih
       const isAlreadySelected = prev.some((v) => v.id === voucher.id);
-
-      if (isAlreadySelected) {
-        // Jika sudah terpilih, batalkan pilihan (hapus dari array)
-        return otherVouchers;
-      } else {
-        // Jika belum, tambahkan voucher baru
-        return [...otherVouchers, voucher];
-      }
+      return isAlreadySelected ? otherVouchers : [...otherVouchers, voucher];
     });
   };
 
   const handleApplyVouchers = () => {
-    dispatch({ type: "APPLY_VOUCHERS", payload: selectedVouchers });
-    navigate(-1); // Kembali ke halaman checkout
+    dispatch(applyVouchers(selectedVouchers));
+    navigate(-1);
   };
 
   const renderVoucherSection = (type, title) => {

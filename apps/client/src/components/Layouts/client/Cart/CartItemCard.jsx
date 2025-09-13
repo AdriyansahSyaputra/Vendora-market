@@ -25,13 +25,11 @@ const CartItemCard = ({
       <p className="text-sm md:text-base font-medium text-slate-800 dark:text-slate-200 line-clamp-2 leading-tight">
         {item.name}
       </p>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-        {item.variation && (
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {item.variation.color}, {item.variation.size}
-          </p>
-        )}
-      </p>
+      {item.variation && (
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {item.variation.color}, {item.variation.size}
+        </p>
+      )}
       <p className="text-base md:text-lg font-bold text-slate-900 dark:text-slate-100 mt-2">
         {item.price.toLocaleString("id-ID", {
           style: "currency",

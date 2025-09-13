@@ -1,10 +1,15 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useCheckout } from "@/context/checkout/CheckoutContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Ticket, CreditCard } from "lucide-react";
 import Header from "@/components/Elements/Header";
+import { useSelector } from "react-redux";
+import {
+  selectSelectedItems,
+  selectAppliedVouchers,
+  selectSelectedPayment,
+} from "@/features/cart/cartSlice";
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat("id-ID", {
@@ -54,46 +59,56 @@ const CheckoutRow = ({ icon, label, value, linkTo }) => (
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const [state] = useCheckout();
-  const { selectedItems, cart, appliedVouchers, selectedPayment } = state;
 
-  // Kalkulasi ringkasan belanja
+  const selectedItems = useSelector(selectSelectedItems);
+  const appliedVouchers = useSelector(selectAppliedVouchers);
+  const selectedPayment = useSelector(selectSelectedPayment);
+
+  // Redirect jika tidak ada item yang dipilih
+  useEffect(() => {
+    if (!selectedItems || selectedItems.length === 0) {
+      navigate("/cart");
+    }
+  }, [selectedItems, navigate]);
+
   const summary = useMemo(() => {
-    const items = selectedItems
-      .map((itemId) => {
-        for (const sellerId in cart) {
-          const item = cart[sellerId].items.find((i) => i.id === itemId);
-          if (item) return item;
-        }
-        return null;
-      })
-      .filter(Boolean);
-
-    const subtotal = items.reduce(
+    const subtotal = selectedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
 
-    // Mock data untuk kalkulasi (di aplikasi nyata, ini dari backend)
-    const shippingCost = 40000;
-    const voucherDiscount =
-      appliedVouchers.find((v) => v.type === "DISCOUNT")?.value || 0;
-    const shippingDiscount =
-      appliedVouchers.find((v) => v.type === "SHIPPING")?.value || 0;
-    const discountAmount = subtotal * (voucherDiscount / 100);
-
+    // Kalkulasi diskon (data voucher akan datang dari Redux)
+    const shippingCost = 40000; 
+    const discountAmount = 0; 
+    const shippingDiscount = 0; 
     const finalTotal =
       subtotal + shippingCost - discountAmount - shippingDiscount;
 
     return {
-      items,
+      items: selectedItems,
       subtotal,
       shippingCost,
       discountAmount,
       shippingDiscount,
       finalTotal,
     };
-  }, [selectedItems, cart, appliedVouchers]);
+  }, [selectedItems, appliedVouchers]);
+
+  const handleCreateOrder = () => {
+    if (!selectedPayment) {
+      alert("Silakan pilih metode pembayaran terlebih dahulu");
+      return;
+    }
+
+    alert("Pesanan berhasil dibuat!");
+    // Here you would typically call an API to create the order
+    // and then navigate to success page or order history
+  };
+
+  // Don't render if no items selected
+  if (!selectedItems || selectedItems.length === 0) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -107,7 +122,7 @@ export default function CheckoutPage() {
           </h3>
           <div className="space-y-3">
             {summary.items.map((item) => (
-              <div key={item.id} className="flex items-center space-x-3">
+              <div key={item._id} className="flex items-center space-x-3">
                 <img
                   src={item.image}
                   alt={item.name}
@@ -194,7 +209,7 @@ export default function CheckoutPage() {
           </div>
           <Button
             className="w-40"
-            onClick={() => alert("Pesanan dibuat!")}
+            onClick={handleCreateOrder}
             disabled={!selectedPayment}
           >
             Buat Pesanan

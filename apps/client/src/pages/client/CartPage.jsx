@@ -3,9 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchCart,
   selectCartStatus,
-  selectCartItemsByStore,
   updateQuantityAsync,
   removeFromCartAsync,
+  selectCartItemsByStore,
+  selectSelectedItemIds,
+  selectSubtotal,
+  toggleItemSelection,
+  toggleSelectAll,
 } from "@/features/cart/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -31,12 +35,11 @@ function CartPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Ambil semua data dan status dari Redux menggunakan selectors
   const cartByStore = useSelector(selectCartItemsByStore);
   const cartStatus = useSelector(selectCartStatus);
-
-  console.log(cartByStore);
-
-  const [selectedItems, setSelectedItems] = useState([]);
+  const selectedItemIds = useSelector(selectSelectedItemIds);
+  const subtotal = useSelector(selectSubtotal);
 
   useEffect(() => {
     if (cartStatus === "idle") {
@@ -52,34 +55,28 @@ function CartPage() {
     () => allItemsInCart.map((i) => i._id),
     [allItemsInCart]
   );
+  const isAllSelected = useMemo(
+    () =>
+      allItemsInCart.length > 0 &&
+      selectedItemIds.length === allItemsInCart.length,
+    [allItemsInCart, selectedItemIds]
+  );
 
-  const isAllSelected =
-    allItemsInCart.length > 0 && selectedItems.length === allItemsInCart.length;
-
-  const subtotal = useMemo(() => {
-    return selectedItems.reduce((total, selectedId) => {
-      const item = allItemsInCart.find((i) => i._id === selectedId);
-      return total + (item ? item.price * item.quantity : 0);
-    }, 0);
-  }, [selectedItems, allItemsInCart]);
-
+  // --- Handlers sekarang hanya men-dispatch aksi ke Redux ---
   const handleQuantityChange = (cartItemId, quantity) => {
     dispatch(updateQuantityAsync({ cartItemId, quantity }));
   };
 
   const handleRemoveItem = (cartItemId) => {
     dispatch(removeFromCartAsync(cartItemId));
-    setSelectedItems((prev) => prev.filter((id) => id !== cartItemId));
   };
 
-  const handleSelectItem = (itemId, isChecked) => {
-    setSelectedItems((prev) =>
-      isChecked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
-    );
+  const handleSelectItem = (itemId) => {
+    dispatch(toggleItemSelection(itemId));
   };
 
   const handleSelectAll = (isChecked) => {
-    setSelectedItems(isChecked ? allItemIds : []);
+    dispatch(toggleSelectAll({ allItemIds, isChecked }));
   };
 
   const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
@@ -96,7 +93,6 @@ function CartPage() {
   if (cartStatus === "loading" && allItemsInCart.length === 0) {
     return <div>Memuat keranjang...</div>;
   }
-
   return (
     <div className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
       <DesktopNavbar />
@@ -123,7 +119,7 @@ function CartPage() {
                     htmlFor="select-all"
                     className="ml-3 text-sm font-medium"
                   >
-                    Pilih Semua ({selectedItems.length} produk)
+                    Pilih Semua ({selectedItemIds.length} produk)
                   </label>
                 </div>
                 {allItemsInCart.length > 0 ? (
@@ -140,7 +136,7 @@ function CartPage() {
                           <CartItemCard
                             key={item._id}
                             item={item}
-                            isSelected={selectedItems.includes(item._id)}
+                            isSelected={selectedItemIds.includes(item._id)}
                             onCheckboxChange={handleSelectItem}
                             onQuantityChange={handleQuantityChange}
                             onRemove={handleRemoveItem}
@@ -164,7 +160,7 @@ function CartPage() {
                   onVoucherClick={() => setIsVoucherModalOpen(true)}
                   onPaymentClick={() => setIsPaymentModalOpen(true)}
                   onCheckout={handleCheckoutClick}
-                  selectedItemCount={selectedItems.length}
+                  selectedItemCount={selectedItemIds.length}
                 />
               </div>
             </div>
@@ -181,11 +177,11 @@ function CartPage() {
               </p>
             </div>
             <Button
-              onClick={() => navigate("/checkout")}
-              disabled={selectedItems.length === 0}
+              onClick={handleCheckoutClick}
+              disabled={selectedItemIds.length === 0}
               className="w-36"
             >
-              Checkout ({selectedItems.length})
+              Checkout ({selectedItemIds.length})
             </Button>
           </div>
 
