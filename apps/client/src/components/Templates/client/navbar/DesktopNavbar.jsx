@@ -25,7 +25,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/auth/authContext";
 import NotificationListDesktop from "@/components/Layouts/client/Notification/NotificationListDesktop";
 import { Badge } from "@/components/ui/badge";
-import { selectCartItemCount} from "@/features/cart/cartSlice";
+import { selectCartItemCount } from "@/features/cart/cartSlice";
 
 const navLinks = [
   {
@@ -158,9 +158,11 @@ const DesktopNavbar = () => {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings/desktop">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <LifeBuoy className="mr-2 h-4 w-4" />
