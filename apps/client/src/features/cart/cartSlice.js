@@ -193,6 +193,14 @@ export const selectCartTotalPrice = createSelector([selectCartItems], (items) =>
   items.reduce((total, item) => total + item.price * item.quantity, 0)
 );
 
+export const selectCartItemCount = createSelector(
+  [selectCartItems],
+  (items) => {
+    if (!Array.isArray(items)) return 0;
+    return items.length;
+  }
+);
+
 export const selectCartItemsByStore = createSelector(
   [selectCartItems],
   (items) => {
@@ -224,7 +232,6 @@ export const selectSelectedItems = createSelector(
   }
 );
 
-// Selector BARU: Menghitung subtotal hanya dari item yang dipilih
 export const selectSubtotal = createSelector(
   [selectSelectedItems],
   (selectedItems) => {

@@ -1,5 +1,16 @@
 import Cart from "../models/cartModel.js";
 
+const cartPopulation = [
+  {
+    path: "items.productId",
+    select: "name images price slug stock variations",
+  },
+  {
+    path: "items.storeId",
+    select: "name",
+  },
+];
+
 export const addItemToCart = async (req, res) => {
   const userId = req.user._id;
   const { productId, storeId, name, image, price, quantity, variation, stock } =
@@ -49,7 +60,10 @@ export const addItemToCart = async (req, res) => {
 
       cart.items.push(newItem);
       cart = await cart.save();
-      return res.status(200).json(cart);
+
+      const populatedCart = await cart.populate(cartPopulation);
+
+      return res.status(200).json(populatedCart);
     } else {
       const newCart = await Cart.create({
         userId,
@@ -97,7 +111,6 @@ export const updateCartItemQuantity = async (req, res) => {
   const { cartItemId } = req.params;
   const { quantity } = req.body;
 
-  // Validasi input awal
   if (!quantity || quantity < 1) {
     return res
       .status(400)
@@ -105,45 +118,36 @@ export const updateCartItemQuantity = async (req, res) => {
   }
 
   try {
-    const cart = await Cart.findOne({ userId });
+    let cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({
-        message: "Keranjang tidak ditemukan untuk pengguna ini.",
-      });
+      return res
+        .status(404)
+        .json({ message: "Item tidak ditemukan di keranjang." });
     }
 
-    // Cari item spesifik di dalam keranjang
-    const itemIndex = cart.items.findIndex(
-      (item) => item && item._id && item._id.toString() === cartItemId
-    );
-
-    if (itemIndex === -1) {
-      return res.status(404).json({
-        message: "Item tidak ditemukan di dalam keranjang.",
-      });
+    const itemToUpdate = cart.items.id(cartItemId);
+    if (!itemToUpdate) {
+      return res
+        .status(404)
+        .json({ message: "Item spesifik tidak ditemukan." });
     }
 
-    const itemToUpdate = cart.items[itemIndex];
-
-    // Validasi stok sebelum melakukan perubahan
     if (quantity > itemToUpdate.stock) {
       return res.status(400).json({
         message: `Stok tidak mencukupi. Sisa stok: ${itemToUpdate.stock}`,
       });
     }
 
-    // Perbarui kuantitas dan simpan dokumen
-    cart.items[itemIndex].quantity = quantity;
+    itemToUpdate.quantity = quantity;
     await cart.save();
 
-    res.status(200).json(cart);
+    const populatedCart = await cart.populate(cartPopulation);
+
+    res.status(200).json(populatedCart);
   } catch (error) {
     console.error("Error updating cart quantity:", error);
-    res.status(500).json({
-      message: "Terjadi kesalahan pada server.",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Terjadi kesalahan pada server." });
   }
 };
 
@@ -157,7 +161,7 @@ export const removeCartItem = async (req, res) => {
       { userId },
       { $pull: { items: { _id: cartItemId } } },
       { new: true }
-    );
+    ).populate(cartPopulation);
 
     if (!updatedCart) {
       return res

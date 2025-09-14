@@ -25,7 +25,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/auth/authContext";
 import NotificationListDesktop from "@/components/Layouts/client/Notification/NotificationListDesktop";
 import { Badge } from "@/components/ui/badge";
-import { selectCartTotalQuantity } from "@/features/cart/cartSlice";
+import { selectCartItemCount} from "@/features/cart/cartSlice";
 
 const navLinks = [
   {
@@ -52,7 +52,7 @@ const navLinks = [
 
 const DesktopNavbar = () => {
   const { user, logout } = useAuth();
-  const totalQuantity = useSelector(selectCartTotalQuantity);
+  const totalQuantity = useSelector(selectCartItemCount);
 
   const userInitials =
     user?.username

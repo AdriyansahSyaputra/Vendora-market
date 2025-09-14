@@ -31,11 +31,10 @@ import DesktopNavbar from "@/components/Templates/client/navbar/DesktopNavbar";
 import Footer from "@/components/Templates/client/footer/Footer";
 import Header from "@/components/Elements/Header";
 
-function CartPage() {
+const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Ambil semua data dan status dari Redux menggunakan selectors
   const cartByStore = useSelector(selectCartItemsByStore);
   const cartStatus = useSelector(selectCartStatus);
   const selectedItemIds = useSelector(selectSelectedItemIds);
@@ -51,10 +50,12 @@ function CartPage() {
     () => Object.values(cartByStore).flatMap((s) => s.items),
     [cartByStore]
   );
+
   const allItemIds = useMemo(
     () => allItemsInCart.map((i) => i._id),
     [allItemsInCart]
   );
+
   const isAllSelected = useMemo(
     () =>
       allItemsInCart.length > 0 &&
@@ -219,6 +220,6 @@ function CartPage() {
       <Footer />
     </div>
   );
-}
+};
 
 export default CartPage;

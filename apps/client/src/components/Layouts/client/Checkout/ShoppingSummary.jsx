@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Ticket, CreditCard } from "lucide-react";
-import { useCheckout } from "@/context/checkout/checkoutContext";
+import { useSelector } from "react-redux";
+import {
+  selectAppliedVouchers,
+  selectSelectedPayment,
+} from "@/features/cart/cartSlice";
 
 const ShoppingSummary = ({
   subtotal,
@@ -11,8 +15,8 @@ const ShoppingSummary = ({
   onCheckout,
   selectedItemCount,
 }) => {
-  const [state] = useCheckout();
-  const { appliedVouchers, selectedPayment } = state;
+  const appliedVouchers = useSelector(selectAppliedVouchers);
+  const selectedPayment = useSelector(selectSelectedPayment);
 
   const totalDiscount = useMemo(() => {
     return appliedVouchers.reduce((acc, voucher) => {

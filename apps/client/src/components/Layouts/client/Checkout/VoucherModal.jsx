@@ -3,8 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DialogFooter } from "@/components/ui/dialog";
-import { useCheckout } from "@/context/checkout/checkoutContext";
+import {
+  applyVouchers,
+  selectAppliedVouchers,
+} from "@/features/cart/cartSlice";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useDispatch, useSelector } from "react-redux";
 
 const mockVouchers = [
   {
@@ -64,9 +68,12 @@ const VoucherCard = ({ voucher, isSelected, onSelect }) => {
 };
 
 const VoucherModal = ({ subtotal, onClose }) => {
-  const [state, dispatch] = useCheckout();
+  const dispatch = useDispatch();
+
+  const currentlyAppliedVouchers = useSelector(selectAppliedVouchers);
+
   const [selectedVouchers, setSelectedVouchers] = useState(
-    state.appliedVouchers
+    currentlyAppliedVouchers || []
   );
 
   const handleSelectVoucher = (voucher) => {
@@ -78,7 +85,7 @@ const VoucherModal = ({ subtotal, onClose }) => {
   };
 
   const handleApplyVouchers = () => {
-    dispatch({ type: "APPLY_VOUCHERS", payload: selectedVouchers });
+    dispatch(applyVouchers(selectedVouchers));
     onClose();
   };
 

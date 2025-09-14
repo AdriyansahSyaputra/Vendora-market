@@ -18,7 +18,6 @@ const formatCurrency = (amount) =>
     minimumFractionDigits: 0,
   }).format(amount);
 
-// Komponen baris untuk ringkasan pembayaran
 const PriceRow = ({ label, value, isDiscount = false }) => (
   <div className="flex justify-between items-center text-sm">
     <p className="text-slate-600 dark:text-slate-400">{label}</p>
@@ -34,7 +33,6 @@ const PriceRow = ({ label, value, isDiscount = false }) => (
   </div>
 );
 
-// Komponen baris untuk pilihan (voucher/pembayaran)
 const CheckoutRow = ({ icon, label, value, linkTo }) => (
   <Link
     to={linkTo}
@@ -55,8 +53,6 @@ const CheckoutRow = ({ icon, label, value, linkTo }) => (
   </Link>
 );
 
-// --- Komponen Halaman Utama ---
-
 export default function CheckoutPage() {
   const navigate = useNavigate();
 
@@ -64,7 +60,6 @@ export default function CheckoutPage() {
   const appliedVouchers = useSelector(selectAppliedVouchers);
   const selectedPayment = useSelector(selectSelectedPayment);
 
-  // Redirect jika tidak ada item yang dipilih
   useEffect(() => {
     if (!selectedItems || selectedItems.length === 0) {
       navigate("/cart");
@@ -77,10 +72,18 @@ export default function CheckoutPage() {
       0
     );
 
-    // Kalkulasi diskon (data voucher akan datang dari Redux)
-    const shippingCost = 40000; 
-    const discountAmount = 0; 
-    const shippingDiscount = 0; 
+    const shippingCost = 40000;
+    const shippingVoucher = appliedVouchers.find((v) => v.type === "SHIPPING");
+    const discountVoucher = appliedVouchers.find((v) => v.type === "DISCOUNT");
+    const shippingDiscount = shippingVoucher ? shippingVoucher.value : 0;
+
+    let discountAmount = 0;
+    if (discountVoucher) {
+      const amount = subtotal * (discountVoucher.value / 100);
+      const maxValue = discountVoucher.maxValue || Infinity;
+      discountAmount = Math.min(amount, maxValue);
+    }
+
     const finalTotal =
       subtotal + shippingCost - discountAmount - shippingDiscount;
 
@@ -101,11 +104,8 @@ export default function CheckoutPage() {
     }
 
     alert("Pesanan berhasil dibuat!");
-    // Here you would typically call an API to create the order
-    // and then navigate to success page or order history
   };
 
-  // Don't render if no items selected
   if (!selectedItems || selectedItems.length === 0) {
     return null;
   }

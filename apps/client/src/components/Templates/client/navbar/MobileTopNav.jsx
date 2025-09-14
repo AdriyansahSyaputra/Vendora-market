@@ -1,21 +1,27 @@
 import { ShoppingCart, MessageSquare, Search, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { selectCartItemCount } from "@/features/cart/cartSlice";
+import { useSelector } from "react-redux";
 
-const CartButton = () => (
-  <Link
-    to="/cart"
-    className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative"
-  >
-    <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-    <Badge
-      variant="destructive"
-      className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs"
+const CartButton = () => {
+  const totalQuantity = useSelector(selectCartItemCount);
+
+  return (
+    <Link
+      to="/cart"
+      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 relative"
     >
-      3
-    </Badge>
-  </Link>
-);
+      <ShoppingCart className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+      <Badge
+        variant="destructive"
+        className="absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs"
+      >
+        {totalQuantity}
+      </Badge>
+    </Link>
+  );
+};
 
 const MessageButton = () => (
   <button className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">

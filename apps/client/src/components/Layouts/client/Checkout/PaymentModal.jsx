@@ -3,8 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DialogFooter } from "@/components/ui/dialog";
-import { useCheckout } from "@/context/checkout/checkoutContext";
 import { CheckCircle } from "lucide-react";
+import {
+  setSelectedPayment,
+  selectSelectedPayment,
+} from "@/features/cart/cartSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const mockPaymentMethods = [
   {
@@ -60,16 +64,22 @@ const mockPaymentMethods = [
 ];
 
 const PaymentModal = ({ onClose }) => {
-  const [state, dispatch] = useCheckout();
+  const dispatch = useDispatch();
+
+  const currentlySelectedPayment = useSelector(selectSelectedPayment);
+
   const [selectedPaymentId, setSelectedPaymentId] = useState(
-    state.selectedPayment?.id
+    currentlySelectedPayment?.id
   );
 
   const handleConfirm = () => {
-    const selected = mockPaymentMethods
+    const selectedMethodObject = mockPaymentMethods
       .flatMap((g) => g.methods)
       .find((m) => m.id === selectedPaymentId);
-    dispatch({ type: "SELECT_PAYMENT", payload: selected });
+
+    if (selectedMethodObject) {
+      dispatch(setSelectedPayment(selectedMethodObject));
+    }
     onClose();
   };
 
