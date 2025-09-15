@@ -3,6 +3,7 @@ import {
   uploadFilesToCloudinary,
   deleteFilesFromCloudinary,
 } from "../utils/cloudinaryUtils.js";
+import mongoose from "mongoose";
 
 export const updateUserProfile = async (req, res) => {
   const userId = req.user._id;
@@ -25,7 +26,6 @@ export const updateUserProfile = async (req, res) => {
 
     if (username && username !== user.username) {
       const existingUser = await User.findOne({ username });
-      // Jika username baru sudah dipakai oleh pengguna lain, kirim error
       if (existingUser && existingUser._id.toString() !== userId) {
         return res
           .status(409)
@@ -83,5 +83,174 @@ export const getUserData = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user data:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * @desc Add a new address to the user's profile
+ * @route POST /api/client/addresses/new
+ * @access Private
+ */
+export const addUserAddress = async (req, res) => {
+  const userId = req.user._id;
+  const {
+    label,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    postalCode,
+    country,
+    isDefault,
+  } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (isDefault) {
+      user.addresses.forEach((addr) => (addr.isDefault = false));
+    }
+
+    const newAddress = {
+      label,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+      country,
+      isDefault,
+    };
+
+    user.addresses.push(newAddress);
+    await user.save();
+
+    res
+      .status(201)
+      .json({ message: "Address added successfully", address: newAddress });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    if (error.name === "ValidationError") {
+      res.status(400).json({ message: "Invalid address data" });
+    } else {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+};
+
+/**
+ * @desc    Mengambil semua alamat milik pengguna yang sedang login.
+ * @route   GET /api/client/addresses
+ * @access  Private
+ */
+export const getUserAddresses = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const user = await User.findById(userId).select("addresses");
+    if (!user) {
+      return res.status(404).json({ message: "Pengguna tidak ditemukan." });
+    }
+    res.status(200).json(user.addresses || []);
+  } catch (error) {
+    console.error("Error fetching addresses:", error);
+    res.status(500).json({ message: "Terjadi kesalahan pada server." });
+  }
+};
+
+/**
+ * @desc    Memperbarui alamat yang sudah ada.
+ * @route   PUT /api/client/addresses/:addressId/update
+ * @access  Private
+ */
+export const updateUserAddress = async (req, res) => {
+  const userId = req.user._id;
+  const { addressId } = req.params;
+  const updates = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(addressId)) {
+    return res.status(400).json({ message: "ID alamat tidak valid." });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Pengguna tidak ditemukan." });
+    }
+
+    const addressToUpdate = user.addresses.id(addressId);
+    if (!addressToUpdate) {
+      return res.status(404).json({ message: "Alamat tidak ditemukan." });
+    }
+
+    // Jika alamat ini akan di-set sebagai alamat utama
+    if (updates.isDefault === true) {
+      user.addresses.forEach((addr) => {
+        // Set semua alamat lain menjadi tidak utama
+        if (addr._id.toString() !== addressId) {
+          addr.isDefault = false;
+        }
+      });
+    }
+
+    // Terapkan pembaruan
+    Object.assign(addressToUpdate, updates);
+    await user.save();
+
+    res.status(200).json({
+      message: "Alamat berhasil diperbarui.",
+      addresses: user.addresses,
+    });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    res.status(500).json({ message: "Terjadi kesalahan pada server." });
+  }
+};
+
+/**
+ * @desc    Menghapus alamat dari daftar.
+ * @route   DELETE /api/client/addresses/:addressId/delete
+ * @access  Private
+ */
+export const deleteUserAddress = async (req, res) => {
+  const userId = req.user._id;
+  const { addressId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(addressId)) {
+    return res.status(400).json({ message: "ID alamat tidak valid." });
+  }
+
+  try {
+    // Gunakan $pull untuk menghapus sub-dokumen dari array
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { addresses: { _id: addressId } } },
+      { new: true } // Mengembalikan dokumen setelah diupdate
+    );
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ message: "Pengguna atau alamat tidak ditemukan." });
+    }
+
+    // Jika alamat yang dihapus adalah alamat utama, set alamat pertama (jika ada) sebagai utama
+    const hasDefaultAddress = updatedUser.addresses.some(
+      (addr) => addr.isDefault
+    );
+    if (!hasDefaultAddress && updatedUser.addresses.length > 0) {
+      updatedUser.addresses[0].isDefault = true;
+      await updatedUser.save();
+    }
+
+    res.status(200).json({
+      message: "Alamat berhasil dihapus.",
+      addresses: updatedUser.addresses,
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    res.status(500).json({ message: "Terjadi kesalahan pada server." });
   }
 };

@@ -1,3 +1,6 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,113 +23,191 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, MoreVertical } from "lucide-react";
+import { PlusCircle, MoreVertical, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import AddressFormMobile from "@/components/Elements/AddressForm";
 
-const AddressCard = ({ address }) => (
-  <div className="p-4 rounded-lg border bg-card dark:border-slate-800">
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="font-bold">
-          {address.label}{" "}
-          {address.isPrimary && (
-            <span className="text-xs font-normal text-blue-500 ml-2">
-              (Primary)
-            </span>
-          )}
-        </p>
-        <p className="font-semibold mt-2">{address.name}</p>
-        <p className="text-sm text-muted-foreground">{address.phone}</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          {address.fullAddress}
-        </p>
+const AddressCardMobile = ({ address, onEdit, onDelete }) => {
+  const fullAddress = [
+    address.addressLine1,
+    address.addressLine2,
+    address.city,
+    `${address.state} ${address.postalCode}`,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <Card className="p-4 rounded-lg border dark:border-slate-800">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="font-bold flex items-center">
+            {address.label}
+            {address.isDefault && (
+              <span className="text-xs font-medium text-sky-600 dark:text-sky-400 ml-2 py-0.5 px-2 rounded-full bg-sky-100 dark:bg-sky-900/50">
+                Utama
+              </span>
+            )}
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            {fullAddress}
+          </p>
+        </div>
+
+        <AlertDialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 flex-shrink-0"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(address)}>
+                Ubah Alamat
+              </DropdownMenuItem>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                  <Trash2 className="w-4 h-4 mr-2" /> Hapus
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Anda yakin ingin menghapus?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tindakan ini tidak dapat dibatalkan. Alamat ini akan dihapus
+                secara permanen.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDelete(address._id)}>
+                Hapus
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-      {/* Di sini Anda bisa menambahkan DropdownMenu untuk Edit/Delete */}
-      <MoreVertical className="w-5 h-5 text-muted-foreground" />
-    </div>
-    <div className="flex gap-2 mt-4">
-      <Button variant="outline" size="sm" className="w-full">
-        Edit
-      </Button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm" className="w-full">
-            Delete
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this
-              address.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  </div>
-);
+    </Card>
+  );
+};
 
 const AddressListView = () => {
-  const addresses = [
-    {
-      id: 1,
-      label: "Home",
-      name: "John Doe",
-      phone: "+62 812 3456 7890",
-      fullAddress: "Jl. Merdeka No. 17, Jakarta Pusat, DKI Jakarta, 10110",
-      isPrimary: true,
-    },
-    {
-      id: 2,
-      label: "Office",
-      name: "John Doe",
-      phone: "+62 812 3456 7890",
-      fullAddress:
-        "Jl. Sudirman Kav. 52-53, Jakarta Selatan, DKI Jakarta, 12190",
-      isPrimary: false,
-    },
-  ];
+  const [addresses, setAddresses] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleAddNew = () => {
+    setEditingAddress(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (address) => {
+    setEditingAddress(address);
+    setIsModalOpen(true);
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/client/addresses");
+      setAddresses(response.data);
+    } catch (error) {
+      console.error("Error fetching addresses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const handleSubmit = async (data) => {
+    if (editingAddress) {
+      await axios.put(
+        `/api/client/addresses/${editingAddress._id}/update`,
+        data,
+        { withCredentials: true }
+      );
+
+      fetchAddresses();
+    } else {
+      await axios.post("/api/client/addresses/new", data, {
+        withCredentials: true,
+      });
+      fetchAddresses();
+    }
+    setIsModalOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (!editingAddress) return;
+    axios
+      .delete(`/api/client/addresses/${editingAddress._id}/delete`, {
+        withCredentials: true,
+      })
+      .then(() => fetchAddresses());
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="p-4 space-y-4">
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" className="w-full">
-            <PlusCircle className="w-4 h-4 mr-2" /> Add New Address
-          </Button>
-        </DialogTrigger>
+      {" "}
+      <Button variant="outline" className="w-full" onClick={handleAddNew}>
+        <PlusCircle className="w-4 h-4 mr-2" /> Tambah Alamat Baru{" "}
+      </Button>{" "}
+      {loading && (
+        <div className="flex justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+        </div>
+      )}
+      {!loading && (
+        <>
+          {addresses.length === 0 ? (
+            <p className="text-center text-slate-500 dark:text-slate-400 py-10">
+              Belum ada alamat tersimpan.
+            </p>
+          ) : (
+            addresses.map((address) => (
+              <AddressCard
+                key={address._id}
+                address={address}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))
+          )}
+        </>
+      )}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Address</DialogTitle>
+            <DialogTitle>
+              {editingAddress ? "Ubah Alamat" : "Tambah Alamat Baru"}
+            </DialogTitle>
           </DialogHeader>
-          {/* Form untuk menambah alamat */}
-          <div className="grid gap-4 py-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Save Address</Button>
-          </DialogFooter>
+          <AddressFormMobile
+            key={editingAddress?._id || "new"}
+            defaultValues={editingAddress}
+            onSubmit={handleSubmit}
+            onCancel={() => setIsModalOpen(false)}
+          />
         </DialogContent>
-      </Dialog>
-      {addresses.map((addr) => (
-        <AddressCard key={addr.id} address={addr} />
-      ))}
+      </Dialog>{" "}
     </div>
   );
 };

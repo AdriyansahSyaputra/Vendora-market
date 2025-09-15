@@ -28,14 +28,19 @@ import {
 import {
   updateUserProfile,
   getUserData,
+  addUserAddress,
+  getUserAddresses,
+  updateUserAddress,
+  deleteUserAddress,
 } from "../controllers/userController.js";
+import { addressSchema } from "../../schemas/address.schema.js";
 
 const router = express.Router();
 
 const profileUploadConfig = {
   fieldName: "avatar",
   maxCount: 1,
-  maxSizeMB: 2,
+  maxSizeMB: 1,
 };
 
 const uploadProfileImage = createUploadMiddleware(profileUploadConfig);
@@ -81,6 +86,30 @@ router.put("/cart/:cartItemId", authenticateUser, updateCartItemQuantity);
 
 router.delete("/cart/:cartItemId", authenticateUser, removeCartItem);
 // Cart routes end
+
+// Address routes
+router.post(
+  "/addresses/new",
+  authenticateUser,
+  validate(addressSchema),
+  addUserAddress
+);
+
+router.get("/addresses", authenticateUser, getUserAddresses);
+
+router.put(
+  "/addresses/:addressId/update",
+  authenticateUser,
+  validate(addressSchema),
+  updateUserAddress
+);
+
+router.delete(
+  "/addresses/:addressId/delete",
+  authenticateUser,
+  deleteUserAddress
+);
+// Address routes end
 
 router.get("/products", getAllProductsForMarketplace);
 

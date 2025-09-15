@@ -14,6 +14,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+      "@schemas": resolve(__dirname, "../schemas"),
     },
   },
   server: {

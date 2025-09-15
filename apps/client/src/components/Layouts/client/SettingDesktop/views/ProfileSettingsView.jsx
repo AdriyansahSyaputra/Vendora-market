@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import SettingsContentCard from "@/components/Elements/SettingsContentCard";
 import {
   Form,
@@ -16,6 +15,28 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import axios from "axios";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+
+const profileFormSchema = z.object({
+  fullName: z.string().min(4, { message: "Nama lengkap minimal 4 karakter." }),
+  username: z
+    .string()
+    .min(3, { message: "Username minimal 3 karakter." })
+    .regex(/^[a-zA-Z0-9_.]+$/, {
+      message:
+        "Username hanya boleh berisi huruf, angka, titik, dan underscore.",
+    }),
+  phone: z
+    .string()
+    .regex(/^\d{9,13}$/, {
+      message: "Nomor telepon harus terdiri dari 9 hingga 13 angka.",
+    })
+    .optional()
+    .or(z.literal("")),
+  avatar: z.instanceof(File).optional().or(z.literal("")),
+});
 
 const ProfileSettingsView = () => {
   const [imagePreview, setImagePreview] = useState(null);
@@ -24,9 +45,8 @@ const ProfileSettingsView = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  console.log(userData);
-
   const form = useForm({
+    resolver: zodResolver(profileFormSchema),
     defaultValues: {
       fullName: "",
       username: "",
@@ -58,8 +78,10 @@ const ProfileSettingsView = () => {
         phone: userData.phone || "",
       });
     }
-    
-  }, [userData, form.reset]);
+    if (userData?.avatar) {
+      setImagePreview(userData.avatar);
+    }
+  }, [userData, form.reset, form]);
 
   const handleImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -79,8 +101,8 @@ const ProfileSettingsView = () => {
   }, [imagePreview]);
 
   const onSubmit = async (values) => {
-    console.log("Form submitted with valid data:", values);
     setIsSubmitting(true);
+    form.clearErrors("avatar");
 
     try {
       const formData = new FormData();
@@ -91,9 +113,22 @@ const ProfileSettingsView = () => {
       if (values.phone) {
         formData.append("phone", values.phone);
       }
-      // Hanya kirim avatar jika itu adalah objek File baru yang dipilih pengguna.
+
+      if (values.username) {
+        formData.append("username", values.username);
+      }
+
       if (values.avatar instanceof File) {
         formData.append("avatar", values.avatar);
+      }
+
+      if ([...formData.entries()].length === 0) {
+        toast({
+          title: "Info",
+          description: "Tidak ada perubahan untuk disimpan.",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       const response = await axios.put("/api/client/profile/update", formData, {
@@ -102,23 +137,45 @@ const ProfileSettingsView = () => {
         },
       });
 
-      console.log("Server response:", response.data);
-
       toast.success("Profil berhasil diperbarui.");
+      setUserData(response.data.user);
     } catch (error) {
       console.error("Error submitting form:", error);
 
-      const errorMessage =
-        error.response?.data?.message || "Gagal memperbarui profil.";
-      console.error("Server error message:", errorMessage);
-      toast.error("Gagal memperbarui profil.");
+      const serverErrors = error.response?.data?.errors;
+
+      if (serverErrors) {
+        Object.keys(serverErrors).forEach((fieldName) => {
+          let frontendFieldName = fieldName;
+          if (fieldName === "image") {
+            frontendFieldName = "avatar";
+          }
+
+          form.setError(frontendFieldName, {
+            type: "server",
+            message: serverErrors[fieldName],
+          });
+        });
+      } else {
+        const errorMessage =
+          error.response?.data?.message || "Gagal memperbarui profil.";
+        toast({
+          variant: "destructive",
+          title: "Gagal",
+          description: errorMessage,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div>Memuat profil Anda...</div>;
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="animate-spin h-6 w-6 text-gray-600" />
+      </div>
+    );
   }
 
   return (
@@ -131,7 +188,6 @@ const ProfileSettingsView = () => {
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Personal Information Section */}
             <div className="space-y-4">
               <FormField
                 control={form.control}
@@ -191,6 +247,7 @@ const ProfileSettingsView = () => {
                     </FormItem>
                   )}
                 />
+
                 <div className="space-y-1.5">
                   <FormField
                     control={form.control}
@@ -199,8 +256,9 @@ const ProfileSettingsView = () => {
                       <FormItem>
                         <FormLabel>Username</FormLabel>
                         <FormControl>
-                          <Input id="username" {...field} />
+                          <Input {...field} />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
