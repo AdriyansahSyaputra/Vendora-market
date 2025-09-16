@@ -7,8 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -21,9 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlusCircle, MoreVertical, Loader2 } from "lucide-react";
+import { PlusCircle, MoreVertical, Loader2, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,7 +179,7 @@ const AddressListView = () => {
             </p>
           ) : (
             addresses.map((address) => (
-              <AddressCard
+              <AddressCardMobile
                 key={address._id}
                 address={address}
                 onEdit={handleEdit}
