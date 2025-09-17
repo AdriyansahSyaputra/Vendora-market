@@ -32,8 +32,10 @@ import {
   getUserAddresses,
   updateUserAddress,
   deleteUserAddress,
+  changeUserPassword,
 } from "../controllers/userController.js";
 import { addressSchema } from "../../schemas/address.schema.js";
+import { passwordFormSchema } from "../../schemas/password.schema.js";
 
 const router = express.Router();
 
@@ -110,6 +112,13 @@ router.delete(
   deleteUserAddress
 );
 // Address routes end
+
+router.put(
+  "/change-password",
+  authenticateUser,
+  validate(passwordFormSchema),
+  changeUserPassword
+);
 
 router.get("/products", getAllProductsForMarketplace);
 

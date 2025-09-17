@@ -122,10 +122,7 @@ const ProfileView = () => {
       }
 
       if ([...formData.entries()].length === 0) {
-        toast({
-          title: "Info",
-          description: "Tidak ada perubahan untuk disimpan.",
-        });
+        toast.info("Tidak ada perubahan yang disimpan.");
         setIsSubmitting(false);
         return;
       }
@@ -139,8 +136,6 @@ const ProfileView = () => {
       toast.success("Profil berhasil diperbarui.");
       setUserData(response.data.user);
     } catch (error) {
-      console.error("Error submitting form:", error);
-
       const serverErrors = error.response?.data?.errors;
 
       if (serverErrors) {
@@ -158,11 +153,7 @@ const ProfileView = () => {
       } else {
         const errorMessage =
           error.response?.data?.message || "Gagal memperbarui profil.";
-        toast({
-          variant: "destructive",
-          title: "Gagal",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
       }
     } finally {
       setIsSubmitting(false);

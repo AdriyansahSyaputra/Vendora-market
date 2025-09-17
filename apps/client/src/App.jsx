@@ -43,6 +43,7 @@ import CartPage from "./pages/client/CartPage";
 import CheckoutPage from "./pages/client/CheckoutPage";
 import VoucherSelectionPage from "./pages/client/VoucherSelectionPage";
 import PaymentSelectionPage from "./pages/client/PaymentSelectionPage";
+import AddressFormPageMobile from "./components/Layouts/client/SettingMobile/views/AddressFormPageMobile";
 
 const App = () => {
   return (
@@ -61,6 +62,12 @@ const App = () => {
         <Route
           path="/notifications/:id"
           element={<NotificationDetailPageDesktop />}
+        />
+
+        <Route path="/settings/addresses/new" element={<AddressFormPageMobile />} />
+        <Route
+          path="/settings/addresses/:addressId/edit"
+          element={<AddressFormPageMobile />}
         />
 
         <Route path="/product/:slug" element={<ProductDetailPageClient />} />

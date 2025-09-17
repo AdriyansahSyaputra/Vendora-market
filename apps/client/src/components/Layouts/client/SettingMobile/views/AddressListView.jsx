@@ -3,12 +3,6 @@ import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -19,14 +13,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, MoreVertical, Loader2, Trash2 } from "lucide-react";
+import {
+  PlusCircle,
+  MoreVertical,
+  Loader2,
+  Trash2,
+  SquarePen,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import AddressFormMobile from "@/components/Elements/AddressForm";
+import { useNavigate } from "react-router-dom";
 
 const AddressCardMobile = ({ address, onEdit, onDelete }) => {
   const fullAddress = [
@@ -69,7 +69,7 @@ const AddressCardMobile = ({ address, onEdit, onDelete }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(address)}>
-                Ubah Alamat
+              <SquarePen className="w-4 h-4 mr-2" /> Edit
               </DropdownMenuItem>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem className="text-red-500 focus:text-red-500">
@@ -101,19 +101,16 @@ const AddressCardMobile = ({ address, onEdit, onDelete }) => {
 };
 
 const AddressListView = () => {
+  const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleAddNew = () => {
-    setEditingAddress(null);
-    setIsModalOpen(true);
+    navigate("/settings/addresses/new");
   };
 
   const handleEdit = (address) => {
-    setEditingAddress(address);
-    setIsModalOpen(true);
+    navigate(`/settings/addresses/${address._id}/edit`, { state: { address } });
   };
 
   const fetchAddresses = async () => {
@@ -132,32 +129,13 @@ const AddressListView = () => {
     fetchAddresses();
   }, []);
 
-  const handleSubmit = async (data) => {
-    if (editingAddress) {
-      await axios.put(
-        `/api/client/addresses/${editingAddress._id}/update`,
-        data,
-        { withCredentials: true }
-      );
-
+  const handleDelete = async (addressId) => {
+    try {
+      await axios.delete(`/api/client/addresses/${addressId}/delete`);
       fetchAddresses();
-    } else {
-      await axios.post("/api/client/addresses/new", data, {
-        withCredentials: true,
-      });
-      fetchAddresses();
+    } catch (err) {
+      console.error("Error deleting address:", err);
     }
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (!editingAddress) return;
-    axios
-      .delete(`/api/client/addresses/${editingAddress._id}/delete`, {
-        withCredentials: true,
-      })
-      .then(() => fetchAddresses());
-    setIsModalOpen(false);
   };
 
   return (
@@ -189,21 +167,6 @@ const AddressListView = () => {
           )}
         </>
       )}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingAddress ? "Ubah Alamat" : "Tambah Alamat Baru"}
-            </DialogTitle>
-          </DialogHeader>
-          <AddressFormMobile
-            key={editingAddress?._id || "new"}
-            defaultValues={editingAddress}
-            onSubmit={handleSubmit}
-            onCancel={() => setIsModalOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>{" "}
     </div>
   );
 };

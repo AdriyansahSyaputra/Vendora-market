@@ -227,7 +227,7 @@ export const deleteUserAddress = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $pull: { addresses: { _id: addressId } } },
-      { new: true } // Mengembalikan dokumen setelah diupdate
+      { new: true }
     );
 
     if (!updatedUser) {
@@ -251,6 +251,55 @@ export const deleteUserAddress = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting address:", error);
+    res.status(500).json({ message: "Terjadi kesalahan pada server." });
+  }
+};
+
+/**
+ * @desc  Mengubah password pengguna.
+ * @route PUT /api/client/profile/change-password
+ * @access Private
+ */
+export const changeUserPassword = async (req, res) => {
+  const userId = req.user._id;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  console.log("Received password change request:", {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+
+  try {
+    if (newPassword !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "Password baru dan konfirmasi tidak cocok." });
+    }
+
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+      return res.status(404).json({ message: "Pengguna tidak ditemukan." });
+    }
+
+    const isMatch = await user.isPasswordCorrect(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Password saat ini salah." });
+    }
+
+    const isSamePassword = await user.isPasswordCorrect(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({
+        message: "Password baru tidak boleh sama dengan password lama.",
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password berhasil diperbarui." });
+  } catch (error) {
+    console.error("Error changing password:", error);
     res.status(500).json({ message: "Terjadi kesalahan pada server." });
   }
 };
