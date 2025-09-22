@@ -19,6 +19,7 @@ const ProductCard = ({ product }) => {
     soldCount: product.soldCount || 0,
     price: product.price || 0,
     slug: product.slug || product._id,
+    discountedPrice: product.discountedPrice || 0,
   };
 
   return (
@@ -52,11 +53,25 @@ const ProductCard = ({ product }) => {
               </div>
             </div>
             <div className="flex items-end justify-between mt-2">
-              <p className="font-bold text-base text-blue-600 dark:text-blue-400">
-                {safeProduct.price && formatCurrency(safeProduct.price)}
-              </p>
+              <div className="flex flex-col">
+                {safeProduct.discountedPrice ? (
+                  <>
+                    <p className="font-bold text-sm md:text-base text-red-600 dark:text-red-400">
+                      {formatCurrency(safeProduct.discountedPrice)}
+                    </p>
+                    <p className="text-xs md:text-sm text-gray-500 line-through ml-2">
+                      {formatCurrency(safeProduct.price)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="font-bold text-xs text-blue-600 dark:text-blue-400">
+                    {safeProduct.price && formatCurrency(safeProduct.price)}
+                  </p>
+                )}
+              </div>
+
               {safeProduct.discount && (
-                <Badge variant="destructive">{safeProduct.discount}%</Badge>
+                <Badge variant="destructive" className="ml-2">{safeProduct.discount}%</Badge>
               )}
             </div>
           </div>

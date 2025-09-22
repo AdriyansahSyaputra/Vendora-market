@@ -1,4 +1,5 @@
 import Cart from "../models/cartModel.js";
+import Product from "../models/productsModel.js";
 
 const cartPopulation = [
   {
@@ -13,10 +14,18 @@ const cartPopulation = [
 
 export const addItemToCart = async (req, res) => {
   const userId = req.user._id;
-  const { productId, storeId, name, image, price, quantity, variation, stock } =
+  const { productId, storeId, name, image, quantity, variation, stock } =
     req.body;
 
   try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Produk tidak ditemukan." });
+    }
+
+    const finalPrice =
+      product.discountedPrice > 0 ? product.discountedPrice : product.price;
+
     let cart = await Cart.findOne({ userId });
 
     if (!storeId) {
@@ -28,7 +37,7 @@ export const addItemToCart = async (req, res) => {
       storeId,
       name,
       image,
-      price,
+      price: finalPrice,
       quantity,
       variation,
       stock,

@@ -14,17 +14,17 @@ const ProductInfo = ({ product, selectedVariationStock }) => {
       </h1>
       <div className="mt-2 flex items-baseline gap-3">
         <p className="text-3xl font-extrabold text-red-600 dark:text-red-500">
-          {formatCurrency(product.price)}
+          {formatCurrency(product.discountedPrice)}
         </p>
-        {product.discountPercentage > 0 && (
+        {product.discountedPrice > 0 && (
           <p className="text-lg font-medium text-slate-400 dark:text-slate-500 line-through">
-            {formatCurrency(product.originalPrice)}
+            {formatCurrency(product.price)}
           </p>
         )}
       </div>
-      {product.discountPercentage > 0 && (
+      {product.discount > 0 && (
         <div className="mt-2">
-          <Badge variant="destructive">{product.discountPercentage}% OFF</Badge>
+          <Badge variant="destructive">{product.discount}% OFF</Badge>
         </div>
       )}
       <div className="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400 gap-4">
